@@ -7,7 +7,7 @@ Sistema de gestión de inventarios — Spring Boot + React + MUI.
 ```
 Inventarios/
 ├── front-end/   # React + Vite + MUI (puerto 5173)
-└── back-end/    # Spring Boot + Java 17 (puerto 8080)
+└── back-end/    # Spring Boot + Java 21 (puerto 8080)
 ```
 
 ## Levantar el proyecto

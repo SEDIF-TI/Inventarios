@@ -1,0 +1,17 @@
+services:
+  backend:
+    networks:
+      - default
+      - proxy_network
+
+  frontend:
+    build:
+      args:
+        VITE_API_URL: /api
+    networks:
+      - default
+      - proxy_network
+
+networks:
+  proxy_network:
+    external: true
