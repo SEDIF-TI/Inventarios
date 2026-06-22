@@ -2,16 +2,18 @@ services:
   backend:
     networks:
       - default
-      - proxy_network
+      - npm
 
   frontend:
-    build:
-      args:
-        VITE_API_URL: /api
     networks:
       - default
-      - proxy_network
+      - npm
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
 
 networks:
-  proxy_network:
+  npm:
     external: true
+    name: RED_DE_NPM
