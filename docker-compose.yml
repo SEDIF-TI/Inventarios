@@ -11,9 +11,11 @@ services:
       - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+      mem_limit: 512m
+      cpus: 1.0
 
   backend:
     build:
@@ -26,21 +28,23 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+      SPRING_PROFILES_ACTIVE: prod
     depends_on:
       db:
         condition: service_healthy
+    mem_limit: 768m
+    cpus: 1.0
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL}
+    build: ./frontend
     container_name: ${PROJECT_NAME}-frontend
-    restart: unless-stopped
+    # Nginx interno escucha en 8080 (sin root, ID-016). Puertos publicados por
+    # entorno (ver nota en el servicio db).
     depends_on:
       - backend
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
 
 volumes:
   db_data:
