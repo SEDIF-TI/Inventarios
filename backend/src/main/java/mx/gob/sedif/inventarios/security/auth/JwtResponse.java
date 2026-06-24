@@ -1,5 +1,3 @@
 package mx.gob.sedif.inventarios.security.auth;
 
-public class JwtResponse {
-
-}
+public record JwtResponse(String token, UserInfoDTO userInfo) {}

@@ -26,7 +26,7 @@ public class Resguardo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pk_n_id_bien")
-    private Long Id;
+    private Integer Id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fk_n_id_area_adscripcion_bien", nullable = false)

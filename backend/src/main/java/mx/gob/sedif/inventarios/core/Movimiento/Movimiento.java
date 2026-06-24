@@ -18,7 +18,7 @@ public class Movimiento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pk_n_id_movimiento")
-    private Long id;
+    private Integer id;
 
     @Column(name = "s_descripcion_movimiento", nullable = false)
     private String descripcionMovimiento;
