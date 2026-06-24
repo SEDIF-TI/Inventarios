@@ -18,7 +18,7 @@ public class AreaAdscripcion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pk_n_id_area_adscripcion")
-    private Long id;
+    private Integer id;
 
     @Column(name = "s_codigo_area_adscripcion", nullable = false, length = 50)
     private String codigoAreaAdscripcion;
