@@ -1,13 +1,12 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
-import Home from './pages/Home'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#1565c0' },
-    secondary: { main: '#f57c00' },
-  },
-})
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { CssBaseline, ThemeProvider } from '@mui/material'
+import theme from './app/theme/theme'
+import LoginPage from './features/auth/pages/LoginPage'
+import HomePage from './pages/HomePage'
 
 function App() {
   return (
@@ -15,7 +14,9 @@ function App() {
       <CssBaseline />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/home" element={<HomePage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
