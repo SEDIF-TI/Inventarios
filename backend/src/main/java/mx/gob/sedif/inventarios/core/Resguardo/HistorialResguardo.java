@@ -15,7 +15,6 @@ import lombok.Getter;
 import lombok.Setter;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
-import mx.gob.sedif.inventarios.core.Movimiento.Movimiento;
 
 @Entity
 @Getter
@@ -39,10 +38,6 @@ public class HistorialResguardo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fk_n_id_empleado", nullable = false)
     private Empleado empleado;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fk_n_id_movimiento", nullable = false)
-    private Movimiento movimiento;
 
     @Column(name = "d_fecha_movimiento", nullable = false)
     private LocalDateTime fechaMovimiento;
