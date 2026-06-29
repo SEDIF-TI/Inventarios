@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mx.gob.sedif.inventarios.core.Usuario.Usuario;
 import mx.gob.sedif.inventarios.core.Usuario.UsuarioRepository;
+import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.security.JwtTokenProvider;
 
 @Slf4j
@@ -49,7 +50,7 @@ public class AuthService {
         addRefreshCookie(response, refreshToken);
 
         Usuario usuario = usuarioRepository.findByNombreUsuario(authentication.getName())
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado tras autenticación"));
+            .orElseThrow(() -> new RuntimeException(MessageConstants.USUARIO_NO_ENCONTRADO_TRAS_AUTH));
 
         UserInfoDTO userInfo = new UserInfoDTO(
             usuario.getNombreUsuario(),
@@ -64,7 +65,7 @@ public class AuthService {
         String refreshToken = extractRefreshCookie(request);
 
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {
-            throw new SecurityException("Refresh token inválido o expirado. Inicie sesión nuevamente.");
+            throw new SecurityException(MessageConstants.REFRESH_TOKEN_INVALIDO);
         }
 
         String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
@@ -77,7 +78,7 @@ public class AuthService {
         addRefreshCookie(response, newRefreshToken);
 
         Usuario usuario = usuarioRepository.findByNombreUsuario(username)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            .orElseThrow(() -> new RuntimeException(MessageConstants.USUARIO_NO_ENCONTRADO));
 
         UserInfoDTO userInfo = new UserInfoDTO(
             usuario.getNombreUsuario(),
