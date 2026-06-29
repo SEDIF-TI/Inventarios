@@ -15,7 +15,6 @@ export default function AppLayout({ children }) {
           ml: `${SIDEBAR_CLOSED + MARGIN * 2}px`,
           p: 3,
           minHeight: '100vh',
-          overflow: 'hidden',
         }}
       >
         {children}

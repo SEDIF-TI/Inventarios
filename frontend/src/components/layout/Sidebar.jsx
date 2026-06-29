@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Box, Tooltip, Typography } from '@mui/material'
 import { Player } from '@lordicon/react'
+import api from '@/services/api'
 import corazon       from '@/assets/logos/corazon.png'
 import { ROUTES }   from '@/constants/routes'
 import icAreas       from '@/assets/icons/areas.json'
@@ -51,10 +52,11 @@ const navItemSx = (active) => ({
 })
 
 function NavItem({ label, icon, path, open }) {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const playerRef = useRef(null)
-  const active    = location.pathname === path
+  const navigate         = useNavigate()
+  const location         = useLocation()
+  const playerRef        = useRef(null)
+  const [hovered, setHovered] = useState(false)
+  const active           = location.pathname === path
 
   return (
     <Tooltip title={open ? '' : label} placement="right" arrow>
@@ -63,13 +65,16 @@ function NavItem({ label, icon, path, open }) {
         tabIndex={0}
         onClick={() => navigate(path)}
         onKeyDown={(e) => e.key === 'Enter' && navigate(path)}
-        onMouseEnter={() => playerRef.current?.playFromBeginning()}
+        onMouseEnter={() => { setHovered(true); playerRef.current?.playFromBeginning() }}
+        onMouseLeave={() => setHovered(false)}
         sx={navItemSx(active)}
       >
         <Box sx={{
           width: 34, height: 34,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
+          opacity: (active || hovered) ? 1 : 0.3,
+          transition: 'opacity 160ms',
         }}>
           <Player
             ref={playerRef}
@@ -90,10 +95,20 @@ function NavItem({ label, icon, path, open }) {
   )
 }
 
+async function handleLogout(navigate) {
+  try {
+    await api.post('/auth/logout')
+  } finally {
+    localStorage.removeItem('accessToken')
+    navigate('/login', { replace: true })
+  }
+}
+
 export default function Sidebar() {
-  const [open, setOpen] = useState(false)
-  const navigate        = useNavigate()
-  const logoutRef       = useRef(null)
+  const [open, setOpen]               = useState(false)
+  const [logoutHovered, setLogoutHovered] = useState(false)
+  const navigate                      = useNavigate()
+  const logoutRef                     = useRef(null)
 
   return (
     <Box
@@ -160,9 +175,10 @@ export default function Sidebar() {
           <Box
             role="button"
             tabIndex={0}
-            onClick={() => navigate('/login')}
-            onKeyDown={(e) => e.key === 'Enter' && navigate('/login')}
-            onMouseEnter={() => logoutRef.current?.playFromBeginning()}
+            onClick={() => handleLogout(navigate)}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogout(navigate)}
+            onMouseEnter={() => { setLogoutHovered(true); logoutRef.current?.playFromBeginning() }}
+            onMouseLeave={() => setLogoutHovered(false)}
             sx={{
               ...navItemSx(false),
               mx: 1, mb: 1,
@@ -175,6 +191,8 @@ export default function Sidebar() {
               width: 34, height: 34,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
+              opacity: logoutHovered ? 1 : 0.3,
+              transition: 'opacity 160ms',
             }}>
               <Player
                 ref={logoutRef}
