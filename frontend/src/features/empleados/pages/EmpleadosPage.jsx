@@ -140,14 +140,16 @@ export default function EmpleadosPage() {
         />
 
         {/* Tabla centrada con ancho máximo */}
-        <Box sx={{ maxWidth: 1500, width: '100%', mx: 'auto' }}>
-          <AppTable
-            columns={COLUMNS(openEdit)}
-            rows={empleados}
-            onRowClick={openDetalle}
-            rowsPerPage={12}
-            resetKey={search}
-          />
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ width: '100%', maxWidth: 1500 }}>
+            <AppTable
+              columns={COLUMNS(openEdit)}
+              rows={empleados}
+              onRowClick={openDetalle}
+              rowsPerPage={12}
+              resetKey={search}
+            />
+          </Box>
         </Box>
 
       </Stack>

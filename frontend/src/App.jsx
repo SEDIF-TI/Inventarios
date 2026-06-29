@@ -4,6 +4,7 @@ import '@fontsource/inter/700.css'
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { CssBaseline, ThemeProvider } from '@mui/material'
+import { Toaster } from 'sileo'
 import theme from './app/theme/theme'
 import LoginPage    from './features/auth/pages/LoginPage'
 import HomePage     from './pages/HomePage'
@@ -19,6 +20,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <Toaster position="top-center" theme="light" duration={4000} />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />

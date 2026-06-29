@@ -4,6 +4,7 @@ import {
   FormControlLabel, Switch, Button,
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
+import { sileo } from 'sileo'
 import api from '@/services/api'
 
 const EMPTY = {
@@ -38,20 +39,41 @@ export default function EmpleadoFormModal({ open, onClose, mode, empleado, areas
 
   const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }))
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
+    const payload = { ...form, idAreaAdscripcion: form.idAreaAdscripcion || null }
+    const request = mode === 'editar'
+      ? api.put(`/empleados/actualizar/${empleado.id}`, payload)
+      : api.post('/empleados/crear', payload)
+
+    const nombreCompleto = [form.apellidoPaternoEmpleado, form.apellidoMaternoEmpleado, form.nombreEmpleado]
+      .filter(Boolean).join(' ')
+
+    const area = areas.find(a => a.id === form.idAreaAdscripcion)
+
     setLoading(true)
-    try {
-      const payload = { ...form, idAreaAdscripcion: form.idAreaAdscripcion || null }
-      if (mode === 'editar') {
-        await api.put(`/empleados/actualizar/${empleado.id}`, payload)
-      } else {
-        await api.post('/empleados/crear', payload)
-      }
-      onSuccess()
-      onClose()
-    } finally {
-      setLoading(false)
-    }
+    sileo.promise(request, {
+      loading: {
+        title: mode === 'editar' ? 'Actualizando...' : 'Guardando...',
+      },
+      success: mode === 'editar'
+        ? {
+            title: 'Empleado actualizado',
+            description: `${nombreCompleto} — ${area?.descripcion ?? 'Sin área'}`,
+          }
+        : {
+            title: 'Empleado registrado',
+            description: `Se dio de alta a ${nombreCompleto}`,
+          },
+      error: {
+        title: 'Ocurrió un error',
+        description: 'No se pudo guardar. Intenta de nuevo.',
+      },
+    })
+
+    request
+      .then(() => { onSuccess(); onClose() })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }
 
   const areaSeleccionada = areas.find(a => a.id === form.idAreaAdscripcion) ?? null
