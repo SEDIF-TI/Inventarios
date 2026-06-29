@@ -2,6 +2,7 @@ package mx.gob.sedif.inventarios.core.Empleado;
 
 import java.util.List;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,18 @@ public class EmpleadoService {
         
         mapearCampos(empleado,request);
         return toRecord(empleadoRepository.save(empleado));
+    }
+
+    @Transactional(readOnly = true)
+    public List<EmpleadoRecord> filtrarEmpleados(String nombre, String noControl, String area) {
+        Specification<Empleado> spec = Specification
+            .where(EmpleadoSpec.porNombre(nombre))
+            .and(EmpleadoSpec.porNoControl(noControl))
+            .and(EmpleadoSpec.porArea(area));
+
+        return empleadoRepository.findAll(spec).stream()
+            .map(this::toRecord)
+            .toList();
     }
 
     //METODOS PRIVADOS-----

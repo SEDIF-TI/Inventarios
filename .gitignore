@@ -12,6 +12,8 @@ pgdata/
 /backend/target/
 backend/.mvn/
 backend/*.log
+backend/.opencode
+backend/.codegraph
 
 #frontend
 /frontend/node_modules/
