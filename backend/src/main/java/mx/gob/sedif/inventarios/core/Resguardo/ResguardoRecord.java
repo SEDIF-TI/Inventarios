@@ -3,6 +3,8 @@ package mx.gob.sedif.inventarios.core.Resguardo;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import mx.gob.sedif.inventarios.util.enums.Estado;
+
 public record ResguardoRecord(
     Integer id,
     Integer idAreaAdscripcion,
@@ -13,7 +15,7 @@ public record ResguardoRecord(
     String noInventarioBien,
     String noInternoBien,
     String descripcionBien,
-    String estadoBien,
+    Estado estadoBien,
     String marcaBien,
     String modeloBien,
     String noSerieBien,

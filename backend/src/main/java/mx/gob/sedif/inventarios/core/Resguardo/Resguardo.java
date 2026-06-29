@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +18,7 @@ import lombok.Getter;
 import lombok.Setter;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
+import mx.gob.sedif.inventarios.util.enums.Estado;
 
 @Entity
 @Getter
@@ -48,8 +51,9 @@ public class Resguardo {
     @Column(name = "s_descripcion_bien", length = 100)
     private String descripcionBien;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "s_estado_bien", length = 100)
-    private String estadoBien;
+    private Estado estadoBien;
 
     @Column(name = "s_marca_bien", length = 100)
     private String marcaBien;
