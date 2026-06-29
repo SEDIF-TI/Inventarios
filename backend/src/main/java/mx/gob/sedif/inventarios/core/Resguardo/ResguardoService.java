@@ -2,6 +2,7 @@ package mx.gob.sedif.inventarios.core.Resguardo;
 
 import java.util.List;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,19 @@ public class ResguardoService {
             .orElseThrow(() -> new RuntimeException("Resguardo no encontrado con id: " + id));
         mapearCampos(resguardo, request);
         return toRecord(resguardoRepository.save(resguardo));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResguardoRecord> filtrarResguardos(String area, String descripcion, String empleado, String noInventario) {
+        Specification<Resguardo> spec = Specification
+            .where(ResguardoSpec.porArea(area))
+            .and(ResguardoSpec.porDescripcion(descripcion))
+            .and(ResguardoSpec.porEmpleado(empleado))
+            .and(ResguardoSpec.porNoInventario(noInventario));
+        
+        return resguardoRepository.findAll(spec).stream()
+            .map(this::toRecord)
+            .toList();
     }
 
     //METODOS PRIVADOS

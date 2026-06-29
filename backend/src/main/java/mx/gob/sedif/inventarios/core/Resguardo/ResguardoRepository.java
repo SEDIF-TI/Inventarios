@@ -3,9 +3,10 @@ package mx.gob.sedif.inventarios.core.Resguardo;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-public interface ResguardoRepository extends JpaRepository<Resguardo, Integer>{
+public interface ResguardoRepository extends JpaRepository<Resguardo, Integer>, JpaSpecificationExecutor<Resguardo>{
 
     @Query("""
             SELECT r FROM Resguardo r

@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/resguardos")
@@ -37,4 +39,15 @@ public class ResguardoResource {
     public ResponseEntity<ResguardoRecord> actualizar(@PathVariable Integer id, @RequestBody ResguardoRequest request) {
         return ResponseEntity.ok(resguardoService.actualizarResguardo(id, request));
     }
+
+    @GetMapping("/filtrar")
+    public ResponseEntity<List<ResguardoRecord>> filtrar(
+        @RequestParam(required = false) String area,
+        @RequestParam(required = false) String descripcion,
+        @RequestParam(required = false) String empleado,
+        @RequestParam(required = false) String noInventario
+    ) {
+        return ResponseEntity.ok(resguardoService.filtrarResguardos(area, descripcion, empleado, noInventario));
+    }
+    
 }
