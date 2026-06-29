@@ -78,13 +78,14 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.allSettled([
+      api.get('/resguardos'),
       api.get('/empleados'),
       api.get('/areas/listarTodas'),
-    ]).then(([empleados, areas]) => {
+    ]).then(([resguardos, empleados, areas]) => {
       setStats([
-        { label: 'Resguardos',  value: '—' },
-        { label: 'Empleados',   value: empleados.status === 'fulfilled' ? empleados.value.data.length : '—' },
-        { label: 'Áreas',       value: areas.status     === 'fulfilled' ? areas.value.data.length     : '—' },
+        { label: 'Resguardos',  value: resguardos.status === 'fulfilled' ? resguardos.value.data.length : '—' },
+        { label: 'Empleados',   value: empleados.status  === 'fulfilled' ? empleados.value.data.length  : '—' },
+        { label: 'Áreas',       value: areas.status      === 'fulfilled' ? areas.value.data.length      : '—' },
         { label: 'Movimientos', value: '—' },
       ])
     })
