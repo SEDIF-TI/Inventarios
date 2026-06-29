@@ -14,6 +14,8 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
 
   return (
     <>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ width: '100%', maxWidth: 1700 }}>
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
         <Table>
           <TableHead>
@@ -74,6 +76,8 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
           </TableBody>
         </Table>
       </TableContainer>
+      </Box>
+      </Box>
 
       {/* Paginación fija al fondo de la ventana */}
       <Box

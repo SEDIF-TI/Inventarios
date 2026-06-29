@@ -5,11 +5,11 @@ import {
 import SearchIcon    from '@mui/icons-material/Search'
 import AddIcon       from '@mui/icons-material/Add'
 import EditIcon      from '@mui/icons-material/Edit'
-import AppLayout     from '@/components/layout/AppLayout'
 import AppTable      from '@/components/ui/AppTable'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
 import EmpleadoFormModal    from '../components/EmpleadoFormModal'
 import api from '@/services/api'
+import { useLoading } from '@/context/LoadingContext'
 
 const COLUMNS = (onEdit) => [
   { key: 'noControlEmpleado', label: 'No. Control', width: 130 },
@@ -72,12 +72,17 @@ export default function EmpleadosPage() {
   const [detalle, setDetalle] = useState({ open: false, empleado: null })
   const [form,    setForm]    = useState({ open: false, mode: 'crear', empleado: null })
 
+  const { setLoading } = useLoading()
+
   useEffect(() => {
-    Promise.all([api.get('/empleados'), api.get('/areas')]).then(([e, a]) => {
-      setAllEmpleados(e.data)
-      setEmpleados(e.data)
-      setAreas(a.data)
-    })
+    setLoading(true)
+    Promise.all([api.get('/empleados'), api.get('/areas/listarActivas')])
+      .then(([e, a]) => {
+        setAllEmpleados(e.data)
+        setEmpleados(e.data)
+        setAreas(a.data)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
@@ -105,8 +110,8 @@ export default function EmpleadosPage() {
   const closeForm    = () => setForm({ open: false, mode: 'crear', empleado: null })
 
   return (
-    <AppLayout>
-      <Stack spacing={3} sx={{ pb: 10 }}>
+    <>
+    <Stack spacing={3} sx={{ pb: 10 }}>
 
         {/* Cabecera */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -139,18 +144,13 @@ export default function EmpleadosPage() {
           sx={{ maxWidth: 480 }}
         />
 
-        {/* Tabla centrada con ancho máximo */}
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Box sx={{ width: '100%', maxWidth: 1500 }}>
-            <AppTable
-              columns={COLUMNS(openEdit)}
-              rows={empleados}
-              onRowClick={openDetalle}
-              rowsPerPage={12}
-              resetKey={search}
-            />
-          </Box>
-        </Box>
+        <AppTable
+          columns={COLUMNS(openEdit)}
+          rows={empleados}
+          onRowClick={openDetalle}
+          rowsPerPage={12}
+          resetKey={search}
+        />
 
       </Stack>
 
@@ -168,6 +168,6 @@ export default function EmpleadosPage() {
         areas={areas}
         onSuccess={refresh}
       />
-    </AppLayout>
+    </>
   )
 }

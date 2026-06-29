@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { Box, Typography, Stack, Divider } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'motion/react'
-import AppLayout from '@/components/layout/AppLayout'
 import corazon      from '@/assets/logos/corazon.png'
 import familiasDif  from '@/assets/logos/familias-dif.png'
 import pensarGrande from '@/assets/logos/pensargrande.png'
+import api from '@/services/api'
 
 const ORBES = [
   {
@@ -58,13 +58,6 @@ function useClock() {
   return now
 }
 
-// TODO: reemplazar con llamadas reales cuando los endpoints estén listos
-const STATS = [
-  { label: 'Resguardos', value: '—' },
-  { label: 'Empleados',  value: '—' },
-  { label: 'Áreas',      value: '—' },
-  { label: 'Movimientos',value: '—' },
-]
 
 const fadeUp = (delay = 0) => ({
   initial:    { opacity: 0, y: 18 },
@@ -76,6 +69,27 @@ export default function HomePage() {
   const theme   = useTheme()
   const now     = useClock()
 
+  const [stats, setStats] = useState([
+    { label: 'Resguardos',  value: '—' },
+    { label: 'Empleados',   value: '—' },
+    { label: 'Áreas',       value: '—' },
+    { label: 'Movimientos', value: '—' },
+  ])
+
+  useEffect(() => {
+    Promise.allSettled([
+      api.get('/empleados'),
+      api.get('/areas/listarTodas'),
+    ]).then(([empleados, areas]) => {
+      setStats([
+        { label: 'Resguardos',  value: '—' },
+        { label: 'Empleados',   value: empleados.status === 'fulfilled' ? empleados.value.data.length : '—' },
+        { label: 'Áreas',       value: areas.status     === 'fulfilled' ? areas.value.data.length     : '—' },
+        { label: 'Movimientos', value: '—' },
+      ])
+    })
+  }, [])
+
   const hh     = String(now.getHours()).padStart(2, '0')
   const mm     = String(now.getMinutes()).padStart(2, '0')
   const ss     = String(now.getSeconds()).padStart(2, '0')
@@ -86,8 +100,7 @@ export default function HomePage() {
   const nombre = 'Marlen'
 
   return (
-    <AppLayout>
-      <Box
+    <Box
         sx={{
           minHeight: 'calc(100vh - 48px)',
           display: 'flex',
@@ -217,7 +230,7 @@ export default function HomePage() {
                 textAlign: 'center',
               }}
             >
-              {STATS.map(({ label, value }) => (
+              {stats.map(({ label, value }) => (
                 <Box key={label}>
                   <Typography
                     variant="h4"
@@ -263,6 +276,5 @@ export default function HomePage() {
         </motion.div>
 
       </Box>
-    </AppLayout>
   )
 }
