@@ -19,9 +19,9 @@ export default function LoadingScreen() {
   return (
     <Box
       sx={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 10,
         bgcolor: 'background.default',
         display: 'flex',
         flexDirection: 'column',

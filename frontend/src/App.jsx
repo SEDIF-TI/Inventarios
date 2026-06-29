@@ -8,10 +8,14 @@ import { Toaster } from 'sileo'
 import { LoadingProvider } from './context/LoadingContext'
 import theme from './app/theme/theme'
 import Sidebar from './components/layout/Sidebar'
+import { Fade } from '@mui/material'
+import LoadingScreen from './components/ui/LoadingScreen'
+import { useLoading } from './context/LoadingContext'
 import LoginPage     from './features/auth/pages/LoginPage'
 import HomePage      from './pages/HomePage'
 import EmpleadosPage from './features/empleados/pages/EmpleadosPage'
-import AreasPage      from './features/areas/pages/AreasPage'
+import AreasPage        from './features/areas/pages/AreasPage'
+import ResguardosPage   from './features/resguardos/pages/ResguardosPage'
 
 const SIDEBAR_CLOSED = 74
 const MARGIN         = 12
@@ -19,6 +23,7 @@ const MARGIN         = 12
 function ProtectedLayout() {
   const token = localStorage.getItem('accessToken')
   if (!token) return <Navigate to="/login" replace />
+  const { loading } = useLoading()
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', overflowX: 'hidden' }}>
       <Sidebar />
@@ -29,8 +34,12 @@ function ProtectedLayout() {
           ml: `${SIDEBAR_CLOSED + MARGIN * 2}px`,
           p: 3,
           minHeight: '100vh',
+          position: 'relative',
         }}
       >
+        <Fade in={loading} timeout={{ enter: 150, exit: 350 }} unmountOnExit>
+          <div><LoadingScreen /></div>
+        </Fade>
         <Outlet />
       </Box>
     </Box>
@@ -49,7 +58,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<ProtectedLayout />}>
               <Route path="/home"      element={<HomePage />} />
-              <Route path="/areas"     element={<AreasPage />} />
+              <Route path="/areas"       element={<AreasPage />} />
+              <Route path="/resguardos" element={<ResguardosPage />} />
               <Route path="/empleados" element={<EmpleadosPage />} />
             </Route>
           </Routes>
