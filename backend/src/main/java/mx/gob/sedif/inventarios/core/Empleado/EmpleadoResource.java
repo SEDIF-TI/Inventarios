@@ -46,10 +46,12 @@ public class EmpleadoResource {
     @GetMapping("/filtrar")
     public ResponseEntity<List<EmpleadoRecord>> filtrar(
         @RequestParam(required = false) String nombre,
+        @RequestParam(required = false) String apellidoPaterno,
+        @RequestParam(required = false) String apellidoMaterno,
         @RequestParam(required = false) String noControl,
         @RequestParam(required = false) String area
     ) {
-        return ResponseEntity.ok(empleadoService.filtrarEmpleados(nombre, noControl, area));
+        return ResponseEntity.ok(empleadoService.filtrarEmpleados(nombre, apellidoPaterno, apellidoMaterno, noControl, area));
     }
     
 }

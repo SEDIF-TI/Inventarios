@@ -41,9 +41,11 @@ public class EmpleadoService {
     }
 
     @Transactional(readOnly = true)
-    public List<EmpleadoRecord> filtrarEmpleados(String nombre, String noControl, String area) {
+    public List<EmpleadoRecord> filtrarEmpleados(String nombre, String apellidoPaterno, String apellidoMaterno, String noControl, String area) {
         Specification<Empleado> spec = Specification
             .where(EmpleadoSpec.porNombre(nombre))
+            .and(EmpleadoSpec.porApellidoPaterno(apellidoPaterno))
+            .and(EmpleadoSpec.porApellidoMaterno(apellidoMaterno))
             .and(EmpleadoSpec.porNoControl(noControl))
             .and(EmpleadoSpec.porArea(area));
 
