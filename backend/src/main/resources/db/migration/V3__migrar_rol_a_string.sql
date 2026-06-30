@@ -12,3 +12,16 @@ ALTER TABLE sc_inventario.tbl_usuario ALTER COLUMN s_rol_tmp SET NOT NULL;
 ALTER TABLE sc_inventario.tbl_usuario DROP COLUMN n_rol;
 
 ALTER TABLE sc_inventario.tbl_usuario RENAME COLUMN s_rol_tmp TO n_rol;
+
+INSERT INTO tbl_usuario (
+    s_nombre_usuario,
+    s_password,
+    n_rol,
+    b_activo
+)
+VALUES (
+    'Marlen',
+    '$2a$10$gI32PXBEXXvEyxxCZWIzCeEKO8G8mj4c8al3aAwvG.H8f5UQH0bnC',
+    'ADMIN',
+    TRUE
+);

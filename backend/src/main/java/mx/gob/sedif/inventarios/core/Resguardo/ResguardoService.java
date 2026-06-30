@@ -1,5 +1,6 @@
 package mx.gob.sedif.inventarios.core.Resguardo;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -11,6 +12,10 @@ import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcionRepository;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
 import mx.gob.sedif.inventarios.core.Empleado.EmpleadoRepository;
+import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardo;
+import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardoRepository;
+import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardoService;
+import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +24,7 @@ public class ResguardoService {
     private final ResguardoRepository resguardoRepository;
     private final AreaAdscripcionRepository areaRepository;
     private final EmpleadoRepository empleadoRepository;
+    private final HistorialResguardoService historialService;
 
     @Transactional(readOnly = true)
     public List<ResguardoRecord> listarResguardos() {
@@ -31,7 +37,11 @@ public class ResguardoService {
     public ResguardoRecord crearResguardo(ResguardoRequest request) {
         Resguardo resguardo = new Resguardo();
         mapearCampos(resguardo, request);
-        return toRecord(resguardoRepository.save(resguardo));
+        Resguardo guardado = resguardoRepository.save(resguardo);
+
+        historialService.registrarHistorial(resguardo, Movimiento.ALTA, "Alta de bien");
+
+        return toRecord(guardado);
     }
 
     @Transactional

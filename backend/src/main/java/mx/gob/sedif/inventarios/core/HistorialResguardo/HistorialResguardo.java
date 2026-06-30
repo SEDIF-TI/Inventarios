@@ -1,4 +1,4 @@
-package mx.gob.sedif.inventarios.core.Resguardo;
+package mx.gob.sedif.inventarios.core.HistorialResguardo;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
+import mx.gob.sedif.inventarios.core.Resguardo.Resguardo;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Entity
