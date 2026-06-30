@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   Stack, TextField, Autocomplete, FormControlLabel, Switch,
   Button, Grid2 as Grid, Typography, Divider, Box,
+  FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 import { sileo } from 'sileo'
@@ -173,7 +174,18 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
             <TextField label="Descripción" value={form.descripcionBien} onChange={set('descripcionBien')} fullWidth />
           </Grid>
           <Grid size={3}>
-            <TextField label="Estado" value={form.estadoBien} onChange={set('estadoBien')} fullWidth />
+            <FormControl fullWidth>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                value={form.estadoBien}
+                label="Estado"
+                onChange={set('estadoBien')}
+              >
+                <MenuItem value="BUENO">Bueno</MenuItem>
+                <MenuItem value="MALO">Malo</MenuItem>
+                <MenuItem value="REGULAR">Regular</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
           <Grid size={3}>
             <TextField label="Marca" value={form.marcaBien} onChange={set('marcaBien')} fullWidth />

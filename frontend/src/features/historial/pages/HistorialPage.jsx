@@ -5,6 +5,7 @@ import {
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import AppTable from '@/components/ui/AppTable'
+import HistorialDetalleModal from '../components/HistorialDetalleModal'
 import api from '@/services/api'
 import { useLoading } from '@/context/LoadingContext'
 
@@ -55,7 +56,11 @@ export default function HistorialPage() {
   const [historial,    setHistorial]    = useState([])
   const [search,       setSearch]       = useState('')
   const [filtroTipo,   setFiltroTipo]   = useState('')
+  const [detalle,      setDetalle]      = useState({ open: false, movimiento: null })
   const { setLoading } = useLoading()
+
+  const openDetalle  = (row) => setDetalle({ open: true, movimiento: row })
+  const closeDetalle = ()    => setDetalle({ open: false, movimiento: null })
 
   useEffect(() => {
     setLoading(true)
@@ -83,6 +88,7 @@ export default function HistorialPage() {
   }, [search, filtroTipo, allHistorial])
 
   return (
+    <>
     <Stack spacing={3} sx={{ pb: 10 }}>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -128,10 +134,18 @@ export default function HistorialPage() {
       <AppTable
         columns={COLUMNS}
         rows={historial}
+        onRowClick={openDetalle}
         rowsPerPage={12}
         resetKey={search + filtroTipo}
       />
 
     </Stack>
+
+    <HistorialDetalleModal
+      open={detalle.open}
+      onClose={closeDetalle}
+      movimiento={detalle.movimiento}
+    />
+    </>
   )
 }

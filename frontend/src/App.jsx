@@ -3,7 +3,7 @@ import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
 
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import { CssBaseline, ThemeProvider, Box } from '@mui/material'
+import { CssBaseline, ThemeProvider, Box, GlobalStyles } from '@mui/material'
 import { Toaster } from 'sileo'
 import { LoadingProvider } from './context/LoadingContext'
 import theme from './app/theme/theme'
@@ -51,6 +51,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <GlobalStyles styles={{ '[data-sileo-viewport]': { zIndex: '1400 !important' } }} />
       <Toaster position="top-center" theme="light" duration={4000} />
       <LoadingProvider>
         <BrowserRouter>
