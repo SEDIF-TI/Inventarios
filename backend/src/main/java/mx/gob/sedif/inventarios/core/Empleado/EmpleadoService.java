@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcionRepository;
 import mx.gob.sedif.inventarios.exception.MessageConstants;
+import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class EmpleadoService {
     @Transactional
     public EmpleadoRecord actualizarEmpleado(Integer id, EmpleadoRequest request){
         Empleado empleado = empleadoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(id)));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(id)));
 
         mapearCampos(empleado,request);
         return toRecord(empleadoRepository.save(empleado));
@@ -66,7 +67,7 @@ public class EmpleadoService {
 
         if (request.idAreaAdscripcion() != null) {
             AreaAdscripcion area = areaAdscripcionRepository.findById(request.idAreaAdscripcion())
-                .orElseThrow(() -> new RuntimeException(MessageConstants.AREA_NO_ENCONTRADA.formatted(request.idAreaAdscripcion())));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(request.idAreaAdscripcion())));
             empleado.setAreaAdscripcion(area);
         } else {
             empleado.setAreaAdscripcion(null);

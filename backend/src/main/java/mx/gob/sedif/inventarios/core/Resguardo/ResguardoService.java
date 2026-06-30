@@ -1,6 +1,5 @@
 package mx.gob.sedif.inventarios.core.Resguardo;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -12,9 +11,9 @@ import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcionRepository;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
 import mx.gob.sedif.inventarios.core.Empleado.EmpleadoRepository;
-import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardo;
-import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardoRepository;
 import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardoService;
+import mx.gob.sedif.inventarios.exception.MessageConstants;
+import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Service
@@ -47,7 +46,7 @@ public class ResguardoService {
     @Transactional
     public ResguardoRecord actualizarResguardo(Integer id, ResguardoRequest request) {
         Resguardo resguardo = resguardoRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Resguardo no encontrado con id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
         mapearCampos(resguardo, request);
         return toRecord(resguardoRepository.save(resguardo));
     }
@@ -68,10 +67,10 @@ public class ResguardoService {
     //METODOS PRIVADOS
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
         AreaAdscripcion area = areaRepository.findById(request.idAreaAdscripcion())
-            .orElseThrow(() -> new RuntimeException("Área no encontrada con id: " + request.idAreaAdscripcion()));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(request.idAreaAdscripcion())));
 
         Empleado empleado = empleadoRepository.findById(request.idEmpleado())
-            .orElseThrow(() -> new RuntimeException("Empleado no encontrado con id: " + request.idEmpleado()));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(request.idEmpleado())));
 
         resguardo.setAreaAdscripcion(area);
         resguardo.setEmpleado(empleado);

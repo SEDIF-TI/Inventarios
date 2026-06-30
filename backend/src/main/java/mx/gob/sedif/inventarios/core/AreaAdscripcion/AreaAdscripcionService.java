@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.exception.MessageConstants;
+import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class AreaAdscripcionService {
     @Transactional
     public AreaAdscripcionRecord actualizarArea(Integer id, AreaAdscripcionRequest request) {
         AreaAdscripcion area = areaAdscripcionRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
         mapearCampos(area, request);
         return toRecord(areaAdscripcionRepository.save(area));
     }

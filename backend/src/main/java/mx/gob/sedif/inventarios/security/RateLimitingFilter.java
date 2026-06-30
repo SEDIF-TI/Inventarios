@@ -9,17 +9,23 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import mx.gob.sedif.inventarios.exception.ApiResponse;
 
 @Component
+@RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final ObjectMapper objectMapper;
 
     private Bucket newBucket() {
         Bandwidth limit = Bandwidth.builder()
@@ -50,7 +56,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 response.setStatus(429);
                 response.setContentType("application/json");
                 response.getWriter().write(
-                    "{\"success\":false,\"message\":\"Demasiados intentos. Intente de nuevo en un minuto.\"}"
+                    objectMapper.writeValueAsString(
+                        ApiResponse.error("Demasiados intentos. Intente de nuevo en un minuto.")
+                    )
                 );
             }
     }
