@@ -12,7 +12,7 @@ public interface HistorialResguardoRepository extends JpaRepository<HistorialRes
         LEFT JOIN FETCH h.resguardo
         LEFT JOIN FETCH h.areaAdscripcion
         LEFT JOIN FETCH h.empleado
-        ORDER BY h.fechamovimiento DESC
+        ORDER BY h.fechaMovimiento DESC
     """)
     List<HistorialResguardo> findAllConRelaciones();
 }
