@@ -10,8 +10,10 @@ import EditIcon        from '@mui/icons-material/Edit'
 import PrintIcon       from '@mui/icons-material/Print'
 import DownloadIcon    from '@mui/icons-material/Download'
 import CloseIcon       from '@mui/icons-material/Close'
-import AppTable        from '@/components/ui/AppTable'
-import AppDatePicker   from '@/components/ui/AppDatePicker'
+import AppTable      from '@/components/ui/AppTable'
+import AppDatePicker from '@/components/ui/AppDatePicker'
+import pngGobUrl      from '@/assets/logos/png-gob.png'
+import familiasDifUrl from '@/assets/logos/familias-dif.png'
 import ResguardoDetalleModal from '../components/ResguardoDetalleModal'
 import ResguardoFormModal    from '../components/ResguardoFormModal'
 import ImprimirModal         from '../components/ImprimirModal'
@@ -177,12 +179,73 @@ export default function ResguardosPage() {
     setFiltroFecha('')
   }
 
-  const handleDescargar = () => {
+  const toBase64 = (url) =>
+    fetch(url).then(r => r.blob()).then(b => new Promise(res => {
+      const fr = new FileReader()
+      fr.onloadend = () => res(fr.result)
+      fr.readAsDataURL(b)
+    }))
+
+  const abrirPDF = (blob) => {
+    const url = URL.createObjectURL(blob)
+    const a   = document.createElement('a')
+    a.href   = url
+    a.target = '_blank'
+    a.rel    = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 30000)
+  }
+
+  const handleDescargar = async () => {
+    if (modoImpresion === 'etiquetas') {
+      const seleccionados = allResguardos.filter(r => selectedIds.has(r.id))
+      const etiquetas = seleccionados.map(r => ({
+        codigoAreaAdscripcion: r.codigoAreaAdscripcion ?? '',
+        areaAdscripcion:       r.areaAdscripcion       ?? '',
+        descripcionBien:       r.descripcionBien        ?? '',
+        marcaBien:             r.marcaBien              ?? '',
+        modeloBien:            r.modeloBien             ?? '',
+        empleado:              r.empleado               ?? '',
+        noInventarioBien:      r.noInventarioBien       ?? '',
+        mesAnioAsignacion:     r.fechaAsignacionBien
+          ? new Date(r.fechaAsignacionBien + 'T00:00:00')
+              .toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })
+              .toUpperCase()
+          : '',
+      }))
+
+      const promise = Promise.all([
+        toBase64(pngGobUrl),
+        toBase64(familiasDifUrl),
+        import('@react-pdf/renderer'),
+        import('../components/EtiquetasPDF'),
+      ]).then(async ([logoPuebla, logoFamilias, { pdf }, { default: EtiquetasPDF }]) => {
+        const { createElement } = await import('react')
+        const blob = await pdf(
+          createElement(EtiquetasPDF, { etiquetas, logoPuebla, logoFamilias })
+        ).toBlob()
+        abrirPDF(blob)
+        return etiquetas.length
+      }).catch(err => {
+        console.error('[Etiquetas] Error generando PDF:', err)
+        throw err
+      })
+
+      sileo.promise(promise, {
+        loading: { title: 'Generando etiquetas...' },
+        success: (n) => ({ title: 'Etiquetas generadas', description: `${n} etiqueta(s) listas` }),
+        error:   { title: 'Error', description: 'No se pudieron generar las etiquetas' },
+      })
+      return
+    }
+
     sileo.promise(
       new Promise(resolve => setTimeout(resolve, 2000)),
       {
         loading: { title: 'Generando PDF...' },
-        success: { title: 'PDF generado', description: `${selectedIds.size} resguardo(s) listos para imprimir` },
+        success: { title: 'PDF generado', description: `${selectedIds.size} resguardo(s) listos` },
         error:   { title: 'Error', description: 'No se pudo generar el PDF' },
       }
     )
