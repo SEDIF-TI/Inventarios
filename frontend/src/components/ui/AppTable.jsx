@@ -15,9 +15,9 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-      <Box sx={{ width: '100%', maxWidth: 1700 }}>
+      <Box sx={{ width: '100%', maxWidth: 1800 }}>
       <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-        <Table>
+        <Table sx={{ tableLayout: 'fixed' }}>
           <TableHead>
             <TableRow>
               {columns.map((col) => (
@@ -34,6 +34,8 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
                     borderBottom: '2px solid',
                     borderColor: 'divider',
                     py: 1.5,
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {col.label}
@@ -66,7 +68,18 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
                   }}
                 >
                   {columns.map((col) => (
-                    <TableCell key={col.key} sx={{ py: 1.5 }}>
+                    <TableCell
+                      key={col.key}
+                      sx={{
+                        py: 1.5,
+                        overflow: 'hidden',
+                        ...(col.render ? {} : {
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: 0,
+                        }),
+                      }}
+                    >
                       {col.render ? col.render(row) : (row[col.key] ?? '—')}
                     </TableCell>
                   ))}
