@@ -50,4 +50,10 @@ public class ResguardoResource {
         return ResponseEntity.ok(resguardoService.filtrarResguardos(area, descripcion, empleado, noInventario));
     }
     
+    @GetMapping("/etiquetas")
+    public ResponseEntity<List<EtiquetaRecord>> obtenerEtiquetas(
+        @RequestParam List<Integer> ids
+    ) {
+        return ResponseEntity.ok(resguardoService.obtenerEtiquetasPorIds(ids));
+    }
 }

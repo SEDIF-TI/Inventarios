@@ -8,6 +8,7 @@ import mx.gob.sedif.inventarios.util.enums.Estado;
 public record ResguardoRecord(
     Integer id,
     Integer idAreaAdscripcion,
+    String codigoAreaAdscripcion,
     String areaAdscripcion,
     Integer idEmpleado,
     String empleado,
