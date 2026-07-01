@@ -56,4 +56,11 @@ public class ResguardoResource {
     ) {
         return ResponseEntity.ok(resguardoService.obtenerEtiquetasPorIds(ids));
     }
+
+    @GetMapping("/formato")
+    public ResponseEntity<List<FormatoResguardoRecord>> obtenerFormato(
+        @RequestParam List<Integer> ids
+    ) {
+        return ResponseEntity.ok(resguardoService.generarFormatosResguardo(ids));
+    }
 }

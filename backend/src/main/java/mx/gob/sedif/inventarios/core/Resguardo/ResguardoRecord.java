@@ -12,6 +12,7 @@ public record ResguardoRecord(
     String areaAdscripcion,
     Integer idEmpleado,
     String empleado,
+    String noControlEmpleado,
     Integer cogBien,
     String noInventarioBien,
     String noInternoBien,

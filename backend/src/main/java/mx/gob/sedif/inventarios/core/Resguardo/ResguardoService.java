@@ -1,10 +1,15 @@
 package mx.gob.sedif.inventarios.core.Resguardo;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
@@ -72,6 +77,33 @@ public class ResguardoService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<FormatoResguardoRecord> generarFormatosResguardo(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Debe seleccionar al menos un bien");
+        }
+
+        List<ResguardoRecord> seleccionados = resguardoRepository.findAllById(ids)
+            .stream()
+            .map(this::toRecord)
+            .toList();
+
+        if (seleccionados.size() != ids.size()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Uno o más resguardos no existen");
+        }
+
+        // agrupa por idEmpleado
+        Map<Integer, List<ResguardoRecord>> porEmpleado = seleccionados.stream()
+            .collect(Collectors.groupingBy(ResguardoRecord::idEmpleado));
+
+        // arma un FormatoResguardoRecord por cada empleado
+        return porEmpleado.values().stream()
+            .map(this::armarFormato)
+            .toList();
+    }
+
     //METODOS PRIVADOS
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
         AreaAdscripcion area = areaRepository.findById(request.idAreaAdscripcion())
@@ -110,9 +142,10 @@ public class ResguardoService {
             r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getCodigoAreaAdscripcion() : null,
             r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getDescripcionAreaAdscripcion() : null,
             r.getEmpleado() != null ? r.getEmpleado().getId() : null,
-            r.getEmpleado() != null ? r.getEmpleado().getNombreEmpleado() + " " +
-                r.getEmpleado().getApellidoPaternoEmpleado() + " " +
-                r.getEmpleado().getApellidoMaternoEmpleado() : null,
+            r.getEmpleado() != null ? r.getEmpleado().getApellidoPaternoEmpleado() + " " +
+                r.getEmpleado().getApellidoMaternoEmpleado() + " " +
+                r.getEmpleado().getNombreEmpleado() : null,
+            r.getEmpleado() != null ? r.getEmpleado().getNoControlEmpleado() : null,
             r.getCogBien(),
             r.getNoInventarioBien(),
             r.getNoInternoBien(),
@@ -132,6 +165,30 @@ public class ResguardoService {
             r.getObservacion(),
             r.getObservacion2(),
             r.getActivo()
+        );
+    }
+
+    private FormatoResguardoRecord armarFormato(List<ResguardoRecord> bienesEmpleado) {
+
+        Map<Boolean, List<BienRecord>> particion = bienesEmpleado.stream()
+            .map(BienRecord::from)
+            .collect(Collectors.partitioningBy(
+                b -> b.noInventario() != null && b.noInventario().startsWith("NP-")
+            ));
+
+        List<BienRecord> noPatrimoniales = particion.get(true);
+        List<BienRecord> patrimoniales = particion.get(false);
+
+        ResguardoRecord primero = bienesEmpleado.get(0);
+
+        return new FormatoResguardoRecord(
+            LocalDate.now(),
+            primero.codigoAreaAdscripcion(),
+            primero.areaAdscripcion(),
+            primero.noControlEmpleado(),
+            primero.empleado(),
+            patrimoniales,
+            noPatrimoniales
         );
     }
 }
