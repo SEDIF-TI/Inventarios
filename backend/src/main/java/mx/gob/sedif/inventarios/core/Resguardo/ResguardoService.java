@@ -64,6 +64,14 @@ public class ResguardoService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<EtiquetaRecord> obtenerEtiquetasPorIds(List<Integer> ids) {
+        return resguardoRepository.findAllById(ids).stream()
+            .map(this::toRecord)
+            .map(EtiquetaRecord::from)
+            .toList();
+    }
+
     //METODOS PRIVADOS
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
         AreaAdscripcion area = areaRepository.findById(request.idAreaAdscripcion())
@@ -99,6 +107,7 @@ public class ResguardoService {
         return new ResguardoRecord(
             r.getId(),
             r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getId() : null,
+            r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getCodigoAreaAdscripcion() : null,
             r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getDescripcionAreaAdscripcion() : null,
             r.getEmpleado() != null ? r.getEmpleado().getId() : null,
             r.getEmpleado() != null ? r.getEmpleado().getNombreEmpleado() + " " +
