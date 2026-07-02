@@ -198,55 +198,23 @@ export default function ResguardosPage() {
     setTimeout(() => URL.revokeObjectURL(url), 30000)
   }
 
-  const formatearFecha = (d) => {
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    return `${dd}/${mm}/${d.getFullYear()}`
-  }
-
   const handleDescargar = async () => {
     if (modoImpresion === 'formatos') {
-      const seleccionados = allResguardos.filter(r => selectedIds.has(r.id))
-
-      const porEmpleado = new Map()
-      seleccionados.forEach(r => {
-        const key = r.idEmpleado
-        if (!porEmpleado.has(key)) porEmpleado.set(key, [])
-        porEmpleado.get(key).push(r)
-      })
-
-      const fechaEmision = formatearFecha(new Date())
-
-      const formatos = Array.from(porEmpleado.values()).map(bienesEmpleado => {
-        const primero = bienesEmpleado[0]
-
-        const bienesPatrimoniales    = bienesEmpleado.filter(r => !(r.noInventarioBien || '').startsWith('NP-'))
-        const bienesNoPatrimoniales  = bienesEmpleado.filter(r => (r.noInventarioBien || '').startsWith('NP-'))
-
-        const observaciones = [...new Set(
-          bienesEmpleado
-            .flatMap(r => [r.observacion, r.observacion2])
-            .filter(o => o && o.trim())
-        )].join('; ')
-
-        return {
-          fechaEmision,
-          codigoArea:        primero.codigoAreaAdscripcion ?? '',
-          area:              primero.areaAdscripcion       ?? '',
-          noControlEmpleado: primero.noControlEmpleado     ?? '',
-          nombreEmpleado:    primero.empleado              ?? '',
-          bienesPatrimoniales,
-          bienesNoPatrimoniales,
-          observaciones,
-        }
-      })
+      const ids = Array.from(selectedIds)
 
       const promise = Promise.all([
+        api.get('/resguardos/formato', { params: { ids } }),
         toBase64(pngGobUrl),
         toBase64(familiasDifUrl),
         import('@react-pdf/renderer'),
         import('../components/FormatosPDF'),
-      ]).then(async ([logoPuebla, logoFamilias, { pdf }, { default: FormatosPDF }]) => {
+      ]).then(async ([res, logoPuebla, logoFamilias, { pdf }, { default: FormatosPDF }]) => {
+        const formatos = res.data.map(f => ({
+          ...f,
+          fechaEmision: f.fechaEmision
+            ? f.fechaEmision.split('-').reverse().join('/')
+            : '',
+        }))
         const { createElement } = await import('react')
         const blob = await pdf(
           createElement(FormatosPDF, { formatos, logoPuebla, logoFamilias })

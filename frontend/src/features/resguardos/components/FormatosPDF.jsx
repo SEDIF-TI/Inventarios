@@ -16,11 +16,6 @@ Font.register({
 
 const FONT = 'Oswald'
 
-const ENTREGA_NOMBRE  = 'REYES OZUNA CRISTOBAL'
-const ENTREGA_CARGO   = 'JEFE DE SECCIÓN DE ALMACÉN E INVENTARIOS'
-const AUTORIZA_NOMBRE = 'OLIVARES ROBLES MARÍA GABRIELA'
-const AUTORIZA_CARGO  = 'JEFA DEL DEPARTAMENTO DE RECURSOS\nMATERIALES Y SERVICIOS GENERALES'
-
 const NOTA = 'NOTA: Manifiesto que los bienes muebles antes mencionados se reciben de acuerdo al estado físico marcado en el listado a partir de la fecha de la firma del resguardo; está bajo mi responsabilidad el darle el uso adecuado para el desempeño de mis actividades y devolverlo cuando me lo soliciten, concluya mi comisión y/o cese mis actividades por cualquier otra causa, en las mismas condiciones en la que lo recibí, salvo el deterioro normal por el uso, haciéndome responsable de los daños, perjuicios, robo o pérdida parcial o total que pudiera sufrir el bien mueble (informando inmediatamente a la sección de almacén e inventarios); en caso de que esto sucediera, me comprometo a devolver otro bien de similares características y condiciones, o en su caso pagar el valor del mercado, en término de lo dispuesto por la normativa en materia de responsabilidad administrativa. -'
 
 const s = StyleSheet.create({
@@ -159,12 +154,6 @@ const s = StyleSheet.create({
   },
 })
 
-const isNA = (v) => !v || v.trim().toUpperCase() === 'N/A'
-
-function materialColor(bien) {
-  return [bien.materialBien, bien.colorBien].filter(v => !isNA(v)).join(', ')
-}
-
 const CONTENT_W = 712
 
 function DashedLine() {
@@ -199,19 +188,20 @@ function BienRow({ bien, index }) {
   return (
     <View style={[s.tr, { backgroundColor: bg }]} wrap={false}>
       <Text style={[s.td, s.colNo]}>{String(index + 1).padStart(3, '0')}</Text>
-      <Text style={[s.td, s.colInv]}>{bien.noInventarioBien}</Text>
+      <Text style={[s.td, s.colInv]}>{bien.noInventario}</Text>
       <Text style={[s.td, s.colDesc]}>{bien.descripcionBien}</Text>
       <Text style={[s.td, s.colEstado]}>{bien.estadoBien}</Text>
-      <Text style={[s.td, s.colMarca]}>{bien.marcaBien}</Text>
-      <Text style={[s.td, s.colModelo]}>{bien.modeloBien}</Text>
-      <Text style={[s.td, s.colSerie]}>{bien.noSerieBien}</Text>
-      <Text style={[s.td, s.colMaterial]}>{materialColor(bien)}</Text>
+      <Text style={[s.td, s.colMarca]}>{bien.marca}</Text>
+      <Text style={[s.td, s.colModelo]}>{bien.modelo}</Text>
+      <Text style={[s.td, s.colSerie]}>{bien.noSerie}</Text>
+      <Text style={[s.td, s.colMaterial]}>{bien.materialColor}</Text>
     </View>
   )
 }
 
 function Formato({ data, logoPuebla, logoFamilias }) {
   const { fechaEmision, codigoArea, area, noControlEmpleado, nombreEmpleado,
+          unidad, direccion, seccion, departamentoRecursosMateriales,
           bienesPatrimoniales, bienesNoPatrimoniales, observaciones } = data
 
   return (
@@ -221,10 +211,10 @@ function Formato({ data, logoPuebla, logoFamilias }) {
       <Image src={logoFamilias} style={s.logoRight} fixed />
 
       <View style={s.header} fixed>
-        <Text style={s.headerLine2}>Unidad de Planeación, Administración y Finanzas</Text>
-        <Text style={s.headerLine3}>Dirección de Administración y Finanzas</Text>
-        <Text style={s.headerLine4}>Departamento de Recursos Materiales y Servicios Generales</Text>
-        <Text style={s.headerLine4}>Sección de Almacén e Inventarios</Text>
+        <Text style={s.headerLine2}>{unidad}</Text>
+        <Text style={s.headerLine3}>{direccion}</Text>
+        <Text style={s.headerLine4}>{departamentoRecursosMateriales?.nombre}</Text>
+        <Text style={s.headerLine4}>{seccion?.nombre}</Text>
       </View>
 
       <Text style={s.title}>Resguardo de Bienes Muebles</Text>
@@ -254,7 +244,7 @@ function Formato({ data, logoPuebla, logoFamilias }) {
             <Text style={s.groupBarText}>RELACIÓN DE BIENES PATRIMONIALES</Text>
           </View>
           {bienesPatrimoniales.map((b, i) => (
-            <BienRow key={b.noInventarioBien ?? i} bien={b} index={i} />
+            <BienRow key={b.noInventario ?? i} bien={b} index={i} />
           ))}
         </>
       )}
@@ -265,7 +255,7 @@ function Formato({ data, logoPuebla, logoFamilias }) {
             <Text style={s.groupBarText}>RELACIÓN DE BIENES NO PATRIMONIALES</Text>
           </View>
           {bienesNoPatrimoniales.map((b, i) => (
-            <BienRow key={b.noInventarioBien ?? i} bien={b} index={i} />
+            <BienRow key={b.noInventario ?? i} bien={b} index={i} />
           ))}
         </>
       )}
@@ -285,15 +275,15 @@ function Formato({ data, logoPuebla, logoFamilias }) {
         <View style={s.firmaCol}>
           <Text style={s.firmaLabel}>ENTREGA</Text>
           <View style={s.firmaLine} />
-          <Text style={s.firmaNombre}>{ENTREGA_NOMBRE}</Text>
-          <Text style={s.firmaCargo}>{ENTREGA_CARGO}</Text>
+          <Text style={s.firmaNombre}>{seccion?.responsable}</Text>
+          <Text style={s.firmaCargo}>{seccion?.nombre}</Text>
         </View>
 
         <View style={s.firmaCol}>
           <Text style={s.firmaLabel}>AUTORIZA</Text>
           <View style={s.firmaLine} />
-          <Text style={s.firmaNombre}>{AUTORIZA_NOMBRE}</Text>
-          <Text style={s.firmaCargo}>{AUTORIZA_CARGO}</Text>
+          <Text style={s.firmaNombre}>{departamentoRecursosMateriales?.responsable}</Text>
+          <Text style={s.firmaCargo}>{departamentoRecursosMateriales?.nombre}</Text>
         </View>
       </View>
 
