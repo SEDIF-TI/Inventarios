@@ -99,7 +99,7 @@ async function handleLogout(navigate) {
   try {
     await api.post('/auth/logout')
   } finally {
-    localStorage.removeItem('accessToken')
+    sessionStorage.removeItem('accessToken')
     navigate('/login', { replace: true })
   }
 }

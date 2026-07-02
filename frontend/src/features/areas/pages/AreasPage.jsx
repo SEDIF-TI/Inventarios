@@ -19,6 +19,11 @@ const COLUMNS = (onEdit) => [
     render: (row) => row.descripcion || '—',
   },
   {
+    key: 'responsable',
+    label: 'Responsable',
+    render: (row) => row.responsable || '—',
+  },
+  {
     key: 'areaActiva',
     label: 'Activa',
     width: 110,
@@ -33,7 +38,7 @@ const COLUMNS = (onEdit) => [
   {
     key: 'acciones',
     label: '',
-    width: 90,
+    width: 120,
     render: (row) => (
       <Button
         variant="outlined"
@@ -70,7 +75,8 @@ export default function AreasPage() {
     if (!q) { setAreas(allAreas); return }
     setAreas(allAreas.filter(a =>
       (a.codigo      || '').toLowerCase().includes(q) ||
-      (a.descripcion || '').toLowerCase().includes(q)
+      (a.descripcion || '').toLowerCase().includes(q) ||
+      (a.responsable || '').toLowerCase().includes(q)
     ))
   }, [search, allAreas])
 

@@ -36,6 +36,9 @@ export default function AreaDetalleModal({ open, onClose, area }) {
         <Grid size={12}>
           <Campo label="Descripción" value={area.descripcion} />
         </Grid>
+        <Grid size={12}>
+          <Campo label="Responsable" value={area.responsable} />
+        </Grid>
       </Grid>
     </AppModal>
   )

@@ -7,6 +7,7 @@ import api from '@/services/api'
 const EMPTY = {
   codigoAreaAdscripcion:       '',
   descripcionAreaAdscripcion:  '',
+  responsable:                 '',
   areaActiva:                  true,
 }
 
@@ -20,6 +21,7 @@ export default function AreaFormModal({ open, onClose, mode, area, onSuccess }) 
       setForm({
         codigoAreaAdscripcion:      area.codigo      ?? '',
         descripcionAreaAdscripcion: area.descripcion ?? '',
+        responsable:                area.responsable ?? '',
         areaActiva:                 area.areaActiva  ?? true,
       })
     } else {
@@ -76,6 +78,12 @@ export default function AreaFormModal({ open, onClose, mode, area, onSuccess }) 
           label="Descripción"
           value={form.descripcionAreaAdscripcion}
           onChange={set('descripcionAreaAdscripcion')}
+          fullWidth
+        />
+        <TextField
+          label="Responsable"
+          value={form.responsable}
+          onChange={set('responsable')}
           fullWidth
         />
         <FormControlLabel

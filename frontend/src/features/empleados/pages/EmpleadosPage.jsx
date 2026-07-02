@@ -48,7 +48,7 @@ const COLUMNS = (onEdit) => [
   {
     key: 'acciones',
     label: '',
-    width: 90,
+    width: 120,
     render: (row) => (
       <Button
         variant="outlined"

@@ -22,9 +22,9 @@ const SIDEBAR_CLOSED = 74
 const MARGIN         = 12
 
 function ProtectedLayout() {
-  const token = localStorage.getItem('accessToken')
-  if (!token) return <Navigate to="/login" replace />
+  const token = sessionStorage.getItem('accessToken')
   const { loading } = useLoading()
+  if (!token) return <Navigate to="/login" replace />
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', overflowX: 'hidden' }}>
       <Sidebar />

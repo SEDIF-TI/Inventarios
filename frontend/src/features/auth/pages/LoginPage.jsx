@@ -85,7 +85,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { data } = await api.post('/auth/login', { username, password })
-      localStorage.setItem('accessToken', data.token)
+      sessionStorage.setItem('accessToken', data.token)
       navigate('/home')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Usuario o contraseña incorrectos.')
