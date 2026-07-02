@@ -9,6 +9,10 @@ public record FormatoResguardoRecord(
     String area,
     String noControlEmpleado,
     String nombreEmpleado,
+    String unidad,
+    String direccion,
+    AreaFirmaRecord seccion,
+    AreaFirmaRecord departamentoRecursosMateriales,
     List<BienRecord> bienesPatrimoniales,
     List<BienRecord> bienesNoPatrimoniales
 ) {}

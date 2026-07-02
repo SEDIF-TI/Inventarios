@@ -2,6 +2,7 @@ package mx.gob.sedif.inventarios.core.AreaAdscripcion;
 
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +20,14 @@ public class AreaAdscripcionService {
     @Transactional(readOnly = true)
     public List<AreaAdscripcionRecord> listarAreasActivas() {
         return areaAdscripcionRepository.findAllActivas().stream()
-            .map(a -> new AreaAdscripcionRecord(a.getId(), a.getCodigoAreaAdscripcion(), a.getDescripcionAreaAdscripcion(), a.getAreaActiva()))
-            .toList();
+            .map(this::toRecord)
+        .toList();
     }
 
     @Transactional(readOnly = true)
     public List<AreaAdscripcionRecord> listarTodas() {
-        return areaAdscripcionRepository.findAll().stream()
-            .map(a -> new AreaAdscripcionRecord(a.getId(), a.getCodigoAreaAdscripcion(), a.getDescripcionAreaAdscripcion(), a.getAreaActiva()))
+        return areaAdscripcionRepository.findAll(Sort.by("id")).stream()
+            .map(this::toRecord)
             .toList();
     }
 
@@ -61,10 +62,15 @@ public class AreaAdscripcionService {
     private void mapearCampos(AreaAdscripcion area, AreaAdscripcionRequest request) {
         area.setCodigoAreaAdscripcion(request.codigoAreaAdscripcion());
         area.setDescripcionAreaAdscripcion(request.descripcionAreaAdscripcion());
+        area.setResponsable(request.responsable());
         area.setAreaActiva(request.areaActiva() != null ? request.areaActiva() : true);
     }
 
     private AreaAdscripcionRecord toRecord(AreaAdscripcion a) {
-        return new AreaAdscripcionRecord(a.getId(), a.getCodigoAreaAdscripcion(), a.getDescripcionAreaAdscripcion(), a.getAreaActiva());
+        return new AreaAdscripcionRecord(a.getId(),
+        a.getCodigoAreaAdscripcion(),
+        a.getDescripcionAreaAdscripcion(),
+        a.getResponsable(),
+        a.getAreaActiva());
     }
 }

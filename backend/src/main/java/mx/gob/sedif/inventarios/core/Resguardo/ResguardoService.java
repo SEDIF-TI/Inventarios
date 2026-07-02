@@ -30,6 +30,11 @@ public class ResguardoService {
     private final EmpleadoRepository empleadoRepository;
     private final HistorialResguardoService historialService;
 
+    private static final Integer ID_UNIDAD = 151;
+    private static final Integer ID_DIRECCION = 152;
+    private static final Integer ID_SECCION = 166;
+    private static final Integer ID_DEPTO_RECURSOS_MATERIALES = 163;
+
     @Transactional(readOnly = true)
     public List<ResguardoRecord> listarResguardos() {
         return resguardoRepository.findAllConRelaciones().stream()
@@ -94,13 +99,17 @@ public class ResguardoService {
                 "Uno o más resguardos no existen");
         }
 
-        // agrupa por idEmpleado
+        // áreas fijas: se consultan una sola vez, son iguales para todos los formatos
+        String unidad = obtenerNombreArea(ID_UNIDAD);
+        String direccion = obtenerNombreArea(ID_DIRECCION);
+        AreaFirmaRecord seccion = obtenerAreaFirma(ID_SECCION);
+        AreaFirmaRecord departamentoRecursosMateriales = obtenerAreaFirma(ID_DEPTO_RECURSOS_MATERIALES);
+
         Map<Integer, List<ResguardoRecord>> porEmpleado = seleccionados.stream()
             .collect(Collectors.groupingBy(ResguardoRecord::idEmpleado));
 
-        // arma un FormatoResguardoRecord por cada empleado
         return porEmpleado.values().stream()
-            .map(this::armarFormato)
+            .map(bienesEmpleado -> armarFormato(bienesEmpleado, unidad, direccion, seccion, departamentoRecursosMateriales))
             .toList();
     }
 
@@ -168,7 +177,9 @@ public class ResguardoService {
         );
     }
 
-    private FormatoResguardoRecord armarFormato(List<ResguardoRecord> bienesEmpleado) {
+    private FormatoResguardoRecord armarFormato(List<ResguardoRecord> bienesEmpleado,
+        String unidad, String direccion, AreaFirmaRecord seccion,
+        AreaFirmaRecord departamentoRecursosMateriales) {
 
         Map<Boolean, List<BienRecord>> particion = bienesEmpleado.stream()
             .map(BienRecord::from)
@@ -187,8 +198,24 @@ public class ResguardoService {
             primero.areaAdscripcion(),
             primero.noControlEmpleado(),
             primero.empleado(),
+            unidad,
+            direccion,
+            seccion,
+            departamentoRecursosMateriales,
             patrimoniales,
             noPatrimoniales
         );
+    }
+
+    private String obtenerNombreArea(Integer id) {
+        return areaRepository.findById(id)
+            .map(AreaAdscripcion::getDescripcionAreaAdscripcion)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
+    }
+
+    private AreaFirmaRecord obtenerAreaFirma(Integer id) {
+        AreaAdscripcion area = areaRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
+        return new AreaFirmaRecord(area.getDescripcionAreaAdscripcion(), area.getResponsable());
     }
 }

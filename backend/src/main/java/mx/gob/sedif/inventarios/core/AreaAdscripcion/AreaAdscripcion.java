@@ -28,4 +28,7 @@ public class AreaAdscripcion {
 
     @Column(name = "b_area_activa", nullable = false)
     private Boolean areaActiva = true;
+
+    @Column(name = "s_responsable")
+    private String responsable;
 }

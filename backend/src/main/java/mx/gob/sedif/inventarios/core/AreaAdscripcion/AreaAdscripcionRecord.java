@@ -4,5 +4,6 @@ public record AreaAdscripcionRecord(
     Integer id,
     String codigo,
     String descripcion,
+    String responsable,
     Boolean areaActiva
 ) {}
