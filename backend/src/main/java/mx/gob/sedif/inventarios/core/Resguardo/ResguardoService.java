@@ -76,7 +76,7 @@ public class ResguardoService {
 
     @Transactional(readOnly = true)
     public List<EtiquetaRecord> obtenerEtiquetasPorIds(List<Integer> ids) {
-        return resguardoRepository.findAllById(ids).stream()
+        return resguardoRepository.findAllByIdConRelaciones(ids).stream()
             .map(this::toRecord)
             .map(EtiquetaRecord::from)
             .toList();
@@ -89,7 +89,7 @@ public class ResguardoService {
                 "Debe seleccionar al menos un bien");
         }
 
-        List<ResguardoRecord> seleccionados = resguardoRepository.findAllById(ids)
+        List<ResguardoRecord> seleccionados = resguardoRepository.findAllByIdConRelaciones(ids)
             .stream()
             .map(this::toRecord)
             .toList();
