@@ -198,7 +198,74 @@ export default function ResguardosPage() {
     setTimeout(() => URL.revokeObjectURL(url), 30000)
   }
 
+  const formatearFecha = (d) => {
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    return `${dd}/${mm}/${d.getFullYear()}`
+  }
+
   const handleDescargar = async () => {
+    if (modoImpresion === 'formatos') {
+      const seleccionados = allResguardos.filter(r => selectedIds.has(r.id))
+
+      const porEmpleado = new Map()
+      seleccionados.forEach(r => {
+        const key = r.idEmpleado
+        if (!porEmpleado.has(key)) porEmpleado.set(key, [])
+        porEmpleado.get(key).push(r)
+      })
+
+      const fechaEmision = formatearFecha(new Date())
+
+      const formatos = Array.from(porEmpleado.values()).map(bienesEmpleado => {
+        const primero = bienesEmpleado[0]
+
+        const bienesPatrimoniales    = bienesEmpleado.filter(r => !(r.noInventarioBien || '').startsWith('NP-'))
+        const bienesNoPatrimoniales  = bienesEmpleado.filter(r => (r.noInventarioBien || '').startsWith('NP-'))
+
+        const observaciones = [...new Set(
+          bienesEmpleado
+            .flatMap(r => [r.observacion, r.observacion2])
+            .filter(o => o && o.trim())
+        )].join('; ')
+
+        return {
+          fechaEmision,
+          codigoArea:        primero.codigoAreaAdscripcion ?? '',
+          area:              primero.areaAdscripcion       ?? '',
+          noControlEmpleado: primero.noControlEmpleado     ?? '',
+          nombreEmpleado:    primero.empleado              ?? '',
+          bienesPatrimoniales,
+          bienesNoPatrimoniales,
+          observaciones,
+        }
+      })
+
+      const promise = Promise.all([
+        toBase64(pngGobUrl),
+        toBase64(familiasDifUrl),
+        import('@react-pdf/renderer'),
+        import('../components/FormatosPDF'),
+      ]).then(async ([logoPuebla, logoFamilias, { pdf }, { default: FormatosPDF }]) => {
+        const { createElement } = await import('react')
+        const blob = await pdf(
+          createElement(FormatosPDF, { formatos, logoPuebla, logoFamilias })
+        ).toBlob()
+        abrirPDF(blob)
+        return formatos.length
+      }).catch(err => {
+        console.error('[Formatos] Error generando PDF:', err)
+        throw err
+      })
+
+      sileo.promise(promise, {
+        loading: { title: 'Generando formatos...' },
+        success: (n) => ({ title: 'Formatos generados', description: `${n} formato(s) listos` }),
+        error:   { title: 'Error', description: 'No se pudieron generar los formatos' },
+      })
+      return
+    }
+
     if (modoImpresion === 'etiquetas') {
       const seleccionados = allResguardos.filter(r => selectedIds.has(r.id))
       const etiquetas = seleccionados.map(r => ({
@@ -240,15 +307,6 @@ export default function ResguardosPage() {
       })
       return
     }
-
-    sileo.promise(
-      new Promise(resolve => setTimeout(resolve, 2000)),
-      {
-        loading: { title: 'Generando PDF...' },
-        success: { title: 'PDF generado', description: `${selectedIds.size} resguardo(s) listos` },
-        error:   { title: 'Error', description: 'No se pudo generar el PDF' },
-      }
-    )
   }
 
   const columns = modoImpresion === 'etiquetas'
