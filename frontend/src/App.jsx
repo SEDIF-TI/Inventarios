@@ -26,7 +26,7 @@ function ProtectedLayout() {
   const { loading } = useLoading()
   if (!token) return <Navigate to="/login" replace />
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default', overflowX: 'hidden' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <Sidebar />
       <Box
         component="main"
@@ -51,7 +51,10 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <GlobalStyles styles={{ '[data-sileo-viewport]': { zIndex: '1400 !important' } }} />
+      <GlobalStyles styles={{
+        '[data-sileo-viewport]': { zIndex: '1400 !important' },
+        'html, body': { overflowX: 'hidden' },
+      }} />
       <Toaster position="top-center" theme="light" duration={4000} />
       <LoadingProvider>
         <BrowserRouter>

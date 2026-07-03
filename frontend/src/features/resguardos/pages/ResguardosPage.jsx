@@ -16,6 +16,7 @@ import pngGobUrl      from '@/assets/logos/png-gob.png'
 import familiasDifUrl from '@/assets/logos/familias-dif.png'
 import ResguardoDetalleModal from '../components/ResguardoDetalleModal'
 import ResguardoFormModal    from '../components/ResguardoFormModal'
+import ResguardoAccionModal  from '../components/ResguardoAccionModal'
 import ImprimirModal         from '../components/ImprimirModal'
 import api             from '@/services/api'
 import { useLoading }  from '@/context/LoadingContext'
@@ -43,6 +44,12 @@ const checkCol = (selectedIds, toggle) => ({
   ),
 })
 
+const ESTATUS_CHIP = {
+  ACTIVO:     { label: 'Activo',     color: 'success' },
+  DISPONIBLE: { label: 'Disponible', color: 'info' },
+  BAJA:       { label: 'Baja',       color: 'error' },
+}
+
 const COLS_NORMAL = (onEdit) => [
   { key: 'noInventarioBien', label: 'No. Inventario', width: 140 },
   { key: 'cogBien',          label: 'COG',            width: 90  },
@@ -51,10 +58,11 @@ const COLS_NORMAL = (onEdit) => [
   { key: 'areaAdscripcion',  label: 'Área'                       },
   { key: 'estadoBien',       label: 'Estado',         width: 110 },
   {
-    key: 'activo', label: 'Activo', width: 100,
-    render: (row) => (
-      <Chip label={row.activo ? 'Activo' : 'Inactivo'} color={row.activo ? 'success' : 'default'} size="small" />
-    ),
+    key: 'estatus', label: 'Estatus', width: 120,
+    render: (row) => {
+      const cfg = ESTATUS_CHIP[row.estatus] ?? { label: row.estatus ?? '—', color: 'default' }
+      return <Chip label={cfg.label} color={cfg.color} size="small" />
+    },
   },
   {
     key: 'acciones', label: '', width: 120,
@@ -104,6 +112,7 @@ export default function ResguardosPage() {
 
   const [detalle,        setDetalle]        = useState({ open: false, resguardo: null })
   const [form,           setForm]           = useState({ open: false, mode: 'crear', resguardo: null })
+  const [accion,         setAccion]         = useState({ open: false, tipo: null, resguardo: null })
   const [modalImprimir,  setModalImprimir]  = useState(false)
 
   const [modoImpresion, setModoImpresion] = useState(null)
@@ -157,6 +166,10 @@ export default function ResguardosPage() {
   const openDetalle  = (row) => setDetalle({ open: true, resguardo: row })
   const closeDetalle = ()    => setDetalle({ open: false, resguardo: null })
   const closeForm    = ()    => setForm({ open: false, mode: 'crear', resguardo: null })
+
+  const openAccion  = (tipo) => setAccion({ open: true, tipo, resguardo: detalle.resguardo })
+  const closeAccion = ()     => setAccion({ open: false, tipo: null, resguardo: null })
+  const onAccionExitosa = () => { refresh(); closeDetalle() }
 
   const toggleSelect = (id) =>
     setSelectedIds(prev => {
@@ -288,7 +301,11 @@ export default function ResguardosPage() {
       <Stack spacing={3} sx={{ pb: 10 }}>
 
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, zIndex: 10,
+          bgcolor: 'background.default', pt: 3, pb: 2, mt: -3,
+        }}>
           <Box>
             <Typography variant="h4" fontWeight={700} sx={{ color: '#db2777' }}>
               Resguardos
@@ -413,6 +430,7 @@ export default function ResguardosPage() {
         open={detalle.open}
         onClose={closeDetalle}
         resguardo={detalle.resguardo}
+        onAccion={openAccion}
       />
 
       <ResguardoFormModal
@@ -423,6 +441,16 @@ export default function ResguardosPage() {
         areas={areas}
         empleados={empleados}
         onSuccess={refresh}
+      />
+
+      <ResguardoAccionModal
+        open={accion.open}
+        onClose={closeAccion}
+        tipo={accion.tipo}
+        resguardo={accion.resguardo}
+        areas={areas}
+        empleados={empleados}
+        onSuccess={onAccionExitosa}
       />
 
       <ImprimirModal

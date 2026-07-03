@@ -220,7 +220,7 @@ function Formato({ data, logoPuebla, logoFamilias }) {
       <Text style={s.title}>Resguardo de Bienes Muebles</Text>
 
       <Text style={s.intro}>
-        Recibí del Departamento de Recursos Materiales y Servicios Generales, a través de la Sección de Almacén e Inventarios,
+        Recibí del {departamentoRecursosMateriales?.nombre}, a través de la {seccion?.nombre},
         para mi resguardo y custodia los bienes que se describen a continuación.
       </Text>
 

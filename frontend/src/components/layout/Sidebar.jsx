@@ -22,8 +22,8 @@ const NAV_ITEMS = [
   { label: 'Empleados',   icon: icEmpleados,   path: ROUTES.EMPLEADOS   },
   { label: 'Resguardos',  icon: icResguardos,  path: ROUTES.RESGUARDOS  },
   { label: 'Historial',   icon: icHistorial,   path: ROUTES.HISTORIAL   },
-  { label: 'Importación', icon: icImportacion, path: ROUTES.IMPORTACION },
-  { label: 'Reportes',    icon: icReportes,    path: ROUTES.REPORTES    },
+  // { label: 'Importación', icon: icImportacion, path: ROUTES.IMPORTACION },
+  // { label: 'Reportes',    icon: icReportes,    path: ROUTES.REPORTES    },
 ]
 
 const navItemSx = (active) => ({
