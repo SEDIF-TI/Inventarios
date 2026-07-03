@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import mx.gob.sedif.inventarios.util.enums.Estado;
+import mx.gob.sedif.inventarios.util.enums.EstatusResguardo;
 
 public record ResguardoRecord(
     Integer id,
@@ -31,5 +32,6 @@ public record ResguardoRecord(
     LocalDate fechaAsignacionBien,
     String observacion,
     String observacion2,
+    EstatusResguardo estatus,
     Boolean activo
 ){}

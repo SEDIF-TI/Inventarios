@@ -19,6 +19,7 @@ import mx.gob.sedif.inventarios.core.Empleado.EmpleadoRepository;
 import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardoService;
 import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
+import mx.gob.sedif.inventarios.util.enums.EstatusResguardo;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Service
@@ -113,16 +114,111 @@ public class ResguardoService {
             .toList();
     }
 
+    @Transactional
+    public ResguardoRecord darDeBaja(Integer id, String motivo) {
+        Resguardo resguardo = resguardoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
+        
+        if (resguardo.getEstatusResguardo() == EstatusResguardo.BAJA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El bien ya se encuentra dado de baja");
+        }
+
+        resguardo.setEstatusResguardo(EstatusResguardo.BAJA);
+        resguardo.setActivo(false);
+        Resguardo guardado = resguardoRepository.save(resguardo);
+
+        historialService.registrarHistorial(resguardo, Movimiento.BAJA, motivo);
+
+        return toRecord(guardado);
+    }
+
+    @Transactional
+    public ResguardoRecord marcarDisponible(Integer id, String motivo) {
+        Resguardo resguardo = resguardoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
+
+        if (resguardo.getEstatusResguardo() == EstatusResguardo.BAJA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede liberar un bien dado de baja");
+        }
+
+        AreaAdscripcion areaDisponible = areaRepository.findById(ID_SECCION)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(ID_SECCION)));
+
+        resguardo.setEmpleado(null);
+        resguardo.setAreaAdscripcion(areaDisponible);
+        resguardo.setEstatusResguardo(EstatusResguardo.DISPONIBLE);
+        Resguardo guardado = resguardoRepository.save(resguardo);
+
+        historialService.registrarHistorial(resguardo, Movimiento.DISPONIBLE, motivo);
+
+        return toRecord(guardado);
+    }
+
+    @Transactional
+    public ResguardoRecord reasignar(Integer id, Integer idNuevoEmpleado, String motivo) {
+        Resguardo resguardo = resguardoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
+
+        if (resguardo.getEstatusResguardo() != EstatusResguardo.ACTIVO) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Solo se puede reasignar un bien que esté activo");
+        }
+
+        Empleado nuevoEmpleado = empleadoRepository.findById(idNuevoEmpleado)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(idNuevoEmpleado)));
+
+        resguardo.setEmpleado(nuevoEmpleado);
+        resguardo.setFechaAsignacionBien(LocalDate.now());
+        Resguardo guardado = resguardoRepository.save(resguardo);
+
+        historialService.registrarHistorial(resguardo, Movimiento.REASIGNACION, motivo);
+
+        return toRecord(guardado);
+    }
+
+    @Transactional
+    public ResguardoRecord asignar(Integer id, Integer idEmpleado, Integer idAreaAdscripcion, String motivo) {
+        Resguardo resguardo = resguardoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
+
+        if (resguardo.getEstatusResguardo() != EstatusResguardo.DISPONIBLE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "Solo se puede asignar un bien que esté disponible");
+        }
+
+        Empleado empleado = empleadoRepository.findById(idEmpleado)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(idEmpleado)));
+
+        AreaAdscripcion area = areaRepository.findById(idAreaAdscripcion)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(idAreaAdscripcion)));
+
+        resguardo.setEmpleado(empleado);
+        resguardo.setAreaAdscripcion(area);
+        resguardo.setEstatusResguardo(EstatusResguardo.ACTIVO);
+        resguardo.setFechaAsignacionBien(LocalDate.now());
+        Resguardo guardado = resguardoRepository.save(resguardo);
+
+        historialService.registrarHistorial(resguardo, Movimiento.ASIGNACION, motivo);
+
+        return toRecord(guardado);
+    }
+
     //METODOS PRIVADOS
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
         AreaAdscripcion area = areaRepository.findById(request.idAreaAdscripcion())
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(request.idAreaAdscripcion())));
 
-        Empleado empleado = empleadoRepository.findById(request.idEmpleado())
-            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(request.idEmpleado())));
+        if (request.idEmpleado() != null) {
+            Empleado empleado = empleadoRepository.findById(request.idEmpleado())
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(request.idEmpleado())));
+            resguardo.setEmpleado(empleado);
+            resguardo.setEstatusResguardo(EstatusResguardo.ACTIVO);
+        } else {
+            resguardo.setEmpleado(null);
+            resguardo.setEstatusResguardo(EstatusResguardo.DISPONIBLE);
+        }
 
         resguardo.setAreaAdscripcion(area);
-        resguardo.setEmpleado(empleado);
         resguardo.setCogBien(request.cogBien());
         resguardo.setNoInventarioBien(request.noInventarioBien());
         resguardo.setNoInternoBien(request.noInternoBien());
@@ -173,6 +269,7 @@ public class ResguardoService {
             r.getFechaAsignacionBien(),
             r.getObservacion(),
             r.getObservacion2(),
+            r.getEstatusResguardo(),
             r.getActivo()
         );
     }

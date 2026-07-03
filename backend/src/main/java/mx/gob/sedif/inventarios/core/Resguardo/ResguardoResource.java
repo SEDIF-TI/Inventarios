@@ -63,4 +63,39 @@ public class ResguardoResource {
     ) {
         return ResponseEntity.ok(resguardoService.generarFormatosResguardo(ids));
     }
+
+    @PutMapping("/{id}/asignar")
+    public ResponseEntity<ResguardoRecord> asignar(
+        @PathVariable Integer id,
+        @RequestParam Integer idEmpleado,
+        @RequestParam Integer idAreaAdscripcion,
+        @RequestParam String motivo
+    ) {
+        return ResponseEntity.ok(resguardoService.asignar(id, idEmpleado, idAreaAdscripcion, motivo));
+    }
+
+    @PutMapping("/{id}/baja")
+    public ResponseEntity<ResguardoRecord> darDeBaja(
+        @PathVariable Integer id,
+        @RequestParam String motivo
+    ) {
+        return ResponseEntity.ok(resguardoService.darDeBaja(id, motivo));
+    }
+
+    @PutMapping("/{id}/disponible")
+    public ResponseEntity<ResguardoRecord> marcarDisponible(
+        @PathVariable Integer id,
+        @RequestParam String motivo
+    ) {
+        return ResponseEntity.ok(resguardoService.marcarDisponible(id, motivo));
+    }
+
+    @PutMapping("/{id}/reasignar")
+    public ResponseEntity<ResguardoRecord> reasignar(
+        @PathVariable Integer id,
+        @RequestParam Integer idNuevoEmpleado,
+        @RequestParam String motivo
+    ) {
+        return ResponseEntity.ok(resguardoService.reasignar(id, idNuevoEmpleado, motivo));
+    }
 }

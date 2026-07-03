@@ -19,6 +19,7 @@ import lombok.Setter;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
 import mx.gob.sedif.inventarios.util.enums.Estado;
+import mx.gob.sedif.inventarios.util.enums.EstatusResguardo;
 
 @Entity
 @Getter
@@ -36,7 +37,7 @@ public class Resguardo {
     private AreaAdscripcion areaAdscripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fk_n_id_empleado", nullable = false)
+    @JoinColumn(name = "fk_n_id_empleado", nullable = true)
     private Empleado empleado;
 
     @Column(name = "n_cog_bien")
@@ -96,4 +97,8 @@ public class Resguardo {
 
     @Column(name = "b_activo", nullable = false)
     private Boolean activo = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "s_estatus_resguardo", length = 20, nullable = false)
+    private EstatusResguardo estatusResguardo = EstatusResguardo.ACTIVO;
 }

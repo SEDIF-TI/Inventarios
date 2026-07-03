@@ -4,5 +4,6 @@ public enum Movimiento {
     ALTA,
     BAJA,
     DISPONIBLE,
-    REASIGNACIÓN
+    REASIGNACION,
+    ASIGNACION
 }
