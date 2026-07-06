@@ -49,6 +49,10 @@ const COLUMNS = [
   { key: 'empleado',        label: 'Empleado' },
   { key: 'areaAdscripcion', label: 'Área'     },
   { key: 'observacion',     label: 'Observación' },
+  {
+    key: 'nombreUsuario', label: 'Realizado por', width: 160,
+    render: (row) => row.nombreUsuario || '—',
+  },
 ]
 
 export default function HistorialPage() {
@@ -81,7 +85,8 @@ export default function HistorialPage() {
           (h.descripcionBien  || '').toLowerCase().includes(q) ||
           (h.empleado         || '').toLowerCase().includes(q) ||
           (h.areaAdscripcion  || '').toLowerCase().includes(q) ||
-          (h.observacion      || '').toLowerCase().includes(q)
+          (h.observacion      || '').toLowerCase().includes(q) ||
+          (h.nombreUsuario    || '').toLowerCase().includes(q)
         return matchTipo && matchText
       })
     )
