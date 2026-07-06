@@ -3,6 +3,7 @@ package mx.gob.sedif.inventarios.core.Resguardo;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -30,13 +31,13 @@ public class ResguardoResource {
     }
     
     @PostMapping("/crear")
-    public ResponseEntity<ResguardoRecord> crear(@RequestBody ResguardoRequest request) {
+    public ResponseEntity<ResguardoRecord> crear(@Valid @RequestBody ResguardoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(resguardoService.crearResguardo(request));
     }
 
     @PutMapping("/actualizar/{id}")
-    public ResponseEntity<ResguardoRecord> actualizar(@PathVariable Integer id, @RequestBody ResguardoRequest request) {
+    public ResponseEntity<ResguardoRecord> actualizar(@PathVariable Integer id, @Valid @RequestBody ResguardoRequest request) {
         return ResponseEntity.ok(resguardoService.actualizarResguardo(id, request));
     }
 
@@ -67,35 +68,32 @@ public class ResguardoResource {
     @PutMapping("/{id}/asignar")
     public ResponseEntity<ResguardoRecord> asignar(
         @PathVariable Integer id,
-        @RequestParam Integer idEmpleado,
-        @RequestParam Integer idAreaAdscripcion,
-        @RequestParam String motivo
+        @Valid @RequestBody AsignarRequest request
     ) {
-        return ResponseEntity.ok(resguardoService.asignar(id, idEmpleado, idAreaAdscripcion, motivo));
+        return ResponseEntity.ok(resguardoService.asignar(id, request.idEmpleado(), request.idAreaAdscripcion(), request.motivo()));
     }
 
     @PutMapping("/{id}/baja")
     public ResponseEntity<ResguardoRecord> darDeBaja(
         @PathVariable Integer id,
-        @RequestParam String motivo
+        @Valid @RequestBody MotivoRequest request
     ) {
-        return ResponseEntity.ok(resguardoService.darDeBaja(id, motivo));
+        return ResponseEntity.ok(resguardoService.darDeBaja(id, request.motivo()));
     }
 
     @PutMapping("/{id}/disponible")
     public ResponseEntity<ResguardoRecord> marcarDisponible(
         @PathVariable Integer id,
-        @RequestParam String motivo
+        @Valid @RequestBody MotivoRequest request
     ) {
-        return ResponseEntity.ok(resguardoService.marcarDisponible(id, motivo));
+        return ResponseEntity.ok(resguardoService.marcarDisponible(id, request.motivo()));
     }
 
     @PutMapping("/{id}/reasignar")
     public ResponseEntity<ResguardoRecord> reasignar(
         @PathVariable Integer id,
-        @RequestParam Integer idNuevoEmpleado,
-        @RequestParam String motivo
+        @Valid @RequestBody ReasignarRequest request
     ) {
-        return ResponseEntity.ok(resguardoService.reasignar(id, idNuevoEmpleado, motivo));
+        return ResponseEntity.ok(resguardoService.reasignar(id, request.idNuevoEmpleado(), request.motivo()));
     }
 }

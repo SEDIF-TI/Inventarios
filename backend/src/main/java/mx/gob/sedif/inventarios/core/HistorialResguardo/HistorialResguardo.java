@@ -18,6 +18,7 @@ import lombok.Setter;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.Empleado.Empleado;
 import mx.gob.sedif.inventarios.core.Resguardo.Resguardo;
+import mx.gob.sedif.inventarios.core.Usuario.Usuario;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Entity
@@ -49,6 +50,10 @@ public class HistorialResguardo {
     @Column(name = "s_observacion", columnDefinition = "TEXT")
     private String observacion;
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fk_n_id_usuario")
+    private Usuario usuario;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "s_tipo_movimiento", nullable = false, length = 50)
     private Movimiento tipoMovimiento;

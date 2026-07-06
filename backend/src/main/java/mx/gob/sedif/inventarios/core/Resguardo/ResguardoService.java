@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+
+import mx.gob.sedif.inventarios.exception.InvalidOperationException;
 
 import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
@@ -86,8 +86,7 @@ public class ResguardoService {
     @Transactional(readOnly = true)
     public List<FormatoResguardoRecord> generarFormatosResguardo(List<Integer> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Debe seleccionar al menos un bien");
+            throw new InvalidOperationException("Debe seleccionar al menos un bien");
         }
 
         List<ResguardoRecord> seleccionados = resguardoRepository.findAllByIdConRelaciones(ids)
@@ -96,8 +95,7 @@ public class ResguardoService {
             .toList();
 
         if (seleccionados.size() != ids.size()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Uno o más resguardos no existen");
+            throw new ResourceNotFoundException("Uno o más resguardos no existen");
         }
 
         // áreas fijas: se consultan una sola vez, son iguales para todos los formatos
@@ -120,7 +118,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
         
         if (resguardo.getEstatusResguardo() == EstatusResguardo.BAJA) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "El bien ya se encuentra dado de baja");
+            throw new InvalidOperationException("El bien ya se encuentra dado de baja");
         }
 
         resguardo.setEstatusResguardo(EstatusResguardo.BAJA);
@@ -138,7 +136,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
 
         if (resguardo.getEstatusResguardo() == EstatusResguardo.BAJA) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede liberar un bien dado de baja");
+            throw new InvalidOperationException("No se puede liberar un bien dado de baja");
         }
 
         AreaAdscripcion areaDisponible = areaRepository.findById(ID_SECCION)
@@ -160,14 +158,14 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
 
         if (resguardo.getEstatusResguardo() != EstatusResguardo.ACTIVO) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                "Solo se puede reasignar un bien que esté activo");
+            throw new InvalidOperationException("Solo se puede reasignar un bien que esté activo");
         }
 
         Empleado nuevoEmpleado = empleadoRepository.findById(idNuevoEmpleado)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(idNuevoEmpleado)));
 
         resguardo.setEmpleado(nuevoEmpleado);
+        resguardo.setAreaAdscripcion(nuevoEmpleado.getAreaAdscripcion());
         resguardo.setFechaAsignacionBien(LocalDate.now());
         Resguardo guardado = resguardoRepository.save(resguardo);
 
@@ -182,8 +180,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
 
         if (resguardo.getEstatusResguardo() != EstatusResguardo.DISPONIBLE) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                "Solo se puede asignar un bien que esté disponible");
+            throw new InvalidOperationException("Solo se puede asignar un bien que esté disponible");
         }
 
         Empleado empleado = empleadoRepository.findById(idEmpleado)
@@ -205,6 +202,9 @@ public class ResguardoService {
 
     //METODOS PRIVADOS
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
+        if (request.idAreaAdscripcion() == null) {
+            throw new InvalidOperationException("El área de adscripción es obligatoria");
+        }
         AreaAdscripcion area = areaRepository.findById(request.idAreaAdscripcion())
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(request.idAreaAdscripcion())));
 

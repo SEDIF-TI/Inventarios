@@ -18,6 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final RateLimitingFilter rateLimitFilter;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -71,14 +74,14 @@ public class SecurityConfig {
                     response.setStatus(401);
                     response.setContentType("application/json");
                     response.getWriter().write(
-                        "{\"success\":false,\"message\":\"No autenticado\"}"
+                        objectMapper.writeValueAsString(ApiResponse.error("No autenticado"))
                     );
                 })
                 .accessDeniedHandler((HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) -> {
                     response.setStatus(403);
                     response.setContentType("application/json");
                     response.getWriter().write(
-                        "{\"success\":false,\"message\":\"Acceso denegado\"}"
+                        objectMapper.writeValueAsString(ApiResponse.error("Acceso denegado"))
                     );
                 })
             )

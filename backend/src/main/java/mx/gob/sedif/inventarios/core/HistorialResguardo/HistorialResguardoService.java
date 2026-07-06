@@ -3,11 +3,14 @@ package mx.gob.sedif.inventarios.core.HistorialResguardo;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.core.Resguardo.Resguardo;
+import mx.gob.sedif.inventarios.core.Usuario.UsuarioRepository;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Service
@@ -15,6 +18,7 @@ import mx.gob.sedif.inventarios.util.enums.Movimiento;
 public class HistorialResguardoService {
 
     private final HistorialResguardoRepository historialRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Transactional(readOnly = true)
     public List<HistorialResguardoRecord> listarHistorial() {
@@ -32,6 +36,13 @@ public class HistorialResguardoService {
         historial.setFechaMovimiento(LocalDateTime.now());
         historial.setObservacion(observacion);
         historial.setTipoMovimiento(tipoMovimiento);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            usuarioRepository.findByNombreUsuario(auth.getName())
+                .ifPresent(historial::setUsuario);
+        }
+
         historialRepository.save(historial);
     }
 
@@ -50,7 +61,9 @@ public class HistorialResguardoService {
                 h.getEmpleado().getApellidoMaternoEmpleado() : null,
             h.getFechaMovimiento(),
             h.getObservacion(),
-            h.getTipoMovimiento()
+            h.getTipoMovimiento(),
+            h.getUsuario() != null ? h.getUsuario().getId() : null,
+            h.getUsuario() != null ? h.getUsuario().getNombreUsuario() : null
         );
     }
 }

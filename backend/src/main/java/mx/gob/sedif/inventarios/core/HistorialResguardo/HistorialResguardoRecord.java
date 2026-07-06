@@ -14,5 +14,7 @@ public record HistorialResguardoRecord(
     String empleado,
     LocalDateTime fechaMovimiento,
     String observacion,
-    Movimiento tipoMovimiento
+    Movimiento tipoMovimiento,
+    Integer idUsuario,
+    String nombreUsuario
 ) {}

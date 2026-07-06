@@ -10,4 +10,7 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Integer>, Jp
 
     @Query("SELECT e FROM Empleado e LEFT JOIN FETCH e.areaAdscripcion")
     List<Empleado> findAllConArea();
+
+    @Query("SELECT e FROM Empleado e LEFT JOIN FETCH e.areaAdscripcion WHERE e.empleadoActivo = true")
+    List<Empleado> findAllActivos();
 }

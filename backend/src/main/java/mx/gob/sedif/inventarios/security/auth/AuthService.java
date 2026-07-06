@@ -63,7 +63,7 @@ public class AuthService {
     }
 
     @Transactional
-    public JwtResponse reffreshAccesToken(HttpServletRequest request, HttpServletResponse response) {
+    public JwtResponse refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractRefreshCookie(request);
 
         if (refreshToken == null || !jwtTokenProvider.validateToken(refreshToken)) {

@@ -43,6 +43,13 @@ public class EmpleadoService {
     }
 
     @Transactional(readOnly = true)
+    public List<EmpleadoRecord> listarEmpleadosActivos() {
+        return empleadoRepository.findAllActivos().stream()
+            .map(this::toRecord)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<EmpleadoRecord> filtrarEmpleados(String nombre, String apellidoPaterno, String apellidoMaterno, String noControl, String area) {
         Specification<Empleado> spec = Specification
             .where(EmpleadoSpec.porNombre(nombre))

@@ -39,6 +39,11 @@ public class EmpleadoResource {
         return ResponseEntity.ok(empleadoService.actualizarEmpleado(id, request));
     }
 
+    @GetMapping("/listarActivos")
+    public ResponseEntity<List<EmpleadoRecord>> listarActivos() {
+        return ResponseEntity.ok(empleadoService.listarEmpleadosActivos());
+    }
+
     @GetMapping("/filtrar")
     public ResponseEntity<List<EmpleadoRecord>> filtrar(
         @RequestParam(required = false) String nombre,
@@ -48,6 +53,5 @@ public class EmpleadoResource {
         @RequestParam(required = false) String area
     ) {
         return ResponseEntity.ok(empleadoService.filtrarEmpleados(nombre, apellidoPaterno, apellidoMaterno, noControl, area));
-    }
-    
+    }   
 }

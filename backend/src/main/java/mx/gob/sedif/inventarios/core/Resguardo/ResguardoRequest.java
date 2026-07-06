@@ -3,9 +3,11 @@ package mx.gob.sedif.inventarios.core.Resguardo;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.NotNull;
 import mx.gob.sedif.inventarios.util.enums.Estado;
 
 public record ResguardoRequest(
+    @NotNull(message = "El área de adscripción es obligatoria")
     Integer idAreaAdscripcion,
     Integer idEmpleado,
     Integer cogBien,

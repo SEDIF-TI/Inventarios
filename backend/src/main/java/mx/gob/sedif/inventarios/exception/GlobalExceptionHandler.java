@@ -90,6 +90,12 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error(MessageConstants.METODO_NO_SOPORTADO));
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatus(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode())
+            .body(ApiResponse.error(ex.getReason()));
+    }
+
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ApiResponse<Void>> handleSecurity(SecurityException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -108,11 +114,5 @@ public class GlobalExceptionHandler {
         log.error("Error crítico no esperado", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ApiResponse.error("Error interno del servidor"));
-    }
-
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResponseStatus(ResponseStatusException ex) {
-        return ResponseEntity.status(ex.getStatusCode())
-            .body(ApiResponse.error(ex.getReason()));
     }
 }
