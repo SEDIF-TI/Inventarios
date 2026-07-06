@@ -61,6 +61,7 @@ export default function HistorialDetalleModal({ open, onClose, movimiento }) {
           </Box>
         </Grid>
         <Grid size={6}><Campo label="Fecha" value={formatFecha(movimiento.fechaMovimiento)} /></Grid>
+        <Grid size={12}><Campo label="Realizado por" value={movimiento.nombreUsuario} /></Grid>
 
         <Grid size={12}><Seccion label="Bien" /></Grid>
         <Grid size={12}><Campo label="Descripción" value={movimiento.descripcionBien} /></Grid>

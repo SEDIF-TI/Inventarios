@@ -32,17 +32,13 @@ export default function ResguardoAccionModal({ open, onClose, tipo, resguardo, a
 
     let request
     if (tipo === 'asignar') {
-      request = api.put(`/resguardos/${resguardo.id}/asignar`, null, {
-        params: { idEmpleado, idAreaAdscripcion, motivo },
-      })
+      request = api.put(`/resguardos/${resguardo.id}/asignar`, { idEmpleado, idAreaAdscripcion, motivo })
     } else if (tipo === 'reasignar') {
-      request = api.put(`/resguardos/${resguardo.id}/reasignar`, null, {
-        params: { idNuevoEmpleado: idEmpleado, motivo },
-      })
+      request = api.put(`/resguardos/${resguardo.id}/reasignar`, { idNuevoEmpleado: idEmpleado, motivo })
     } else if (tipo === 'baja') {
-      request = api.put(`/resguardos/${resguardo.id}/baja`, null, { params: { motivo } })
+      request = api.put(`/resguardos/${resguardo.id}/baja`, { motivo })
     } else {
-      request = api.put(`/resguardos/${resguardo.id}/disponible`, null, { params: { motivo } })
+      request = api.put(`/resguardos/${resguardo.id}/disponible`, { motivo })
     }
 
     setLoading(true)

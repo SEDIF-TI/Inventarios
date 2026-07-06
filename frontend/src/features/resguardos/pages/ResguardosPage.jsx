@@ -127,7 +127,7 @@ export default function ResguardosPage() {
     Promise.all([
       api.get('/resguardos'),
       api.get('/areas/listarActivas'),
-      api.get('/empleados'),
+      api.get('/empleados/listarActivos'),
     ])
       .then(([r, a, e]) => {
         setAllResguardos(r.data)
