@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.http.HttpMethod;
+
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,6 +70,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/usuarios/**").hasAnyRole("SUPERADMIN", "ADMIN")
                 .requestMatchers("/api/resguardos/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
+                .requestMatchers("/api/Historial/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
+                .requestMatchers(HttpMethod.GET, "/api/areas/listarActivas").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
+                .requestMatchers(HttpMethod.GET, "/api/empleados/listarActivos").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
                 .requestMatchers("/api/**").hasAnyRole("SUPERADMIN", "ADMIN")
                 .anyRequest().authenticated()
             )
