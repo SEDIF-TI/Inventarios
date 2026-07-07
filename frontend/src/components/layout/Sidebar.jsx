@@ -9,6 +9,7 @@ import icAreas       from '@/assets/icons/areas.json'
 import icEmpleados   from '@/assets/icons/empleados.json'
 import icResguardos  from '@/assets/icons/resguardos.json'
 import icHistorial   from '@/assets/icons/historial.json'
+import icUsuarios    from '@/assets/icons/usuarios.json'
 import icImportacion from '@/assets/icons/importacion.json'
 import icReportes    from '@/assets/icons/reportes.json'
 import icLogout      from '@/assets/icons/logout.json'
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { label: 'Empleados',   icon: icEmpleados,   path: ROUTES.EMPLEADOS   },
   { label: 'Resguardos',  icon: icResguardos,  path: ROUTES.RESGUARDOS  },
   { label: 'Historial',   icon: icHistorial,   path: ROUTES.HISTORIAL   },
+  { label: 'Usuarios',    icon: icUsuarios,    path: ROUTES.USUARIOS    },
   // { label: 'Importación', icon: icImportacion, path: ROUTES.IMPORTACION },
   // { label: 'Reportes',    icon: icReportes,    path: ROUTES.REPORTES    },
 ]

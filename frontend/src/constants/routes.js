@@ -5,6 +5,7 @@ export const ROUTES = {
   EMPLEADOS:   '/empleados',
   RESGUARDOS:  '/resguardos',
   HISTORIAL:   '/historial',
+  USUARIOS:    '/usuarios',
   IMPORTACION: '/importacion',
   REPORTES:    '/reportes',
 }

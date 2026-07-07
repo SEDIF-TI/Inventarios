@@ -17,6 +17,7 @@ import EmpleadosPage from './features/empleados/pages/EmpleadosPage'
 import AreasPage        from './features/areas/pages/AreasPage'
 import ResguardosPage   from './features/resguardos/pages/ResguardosPage'
 import HistorialPage    from './features/historial/pages/HistorialPage'
+import UsuariosPage     from './features/usuarios/pages/UsuariosPage'
 
 const SIDEBAR_CLOSED = 74
 const MARGIN         = 12
@@ -67,6 +68,7 @@ function App() {
               <Route path="/resguardos" element={<ResguardosPage />} />
               <Route path="/empleados" element={<EmpleadosPage />} />
               <Route path="/historial" element={<HistorialPage />} />
+              <Route path="/usuarios" element={<UsuariosPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
