@@ -6,6 +6,7 @@ import corazon      from '@/assets/logos/corazon.png'
 import familiasDif  from '@/assets/logos/familias-dif.png'
 import pensarGrande from '@/assets/logos/pensargrande.png'
 import api from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 
 const ORBES = [
   {
@@ -68,6 +69,8 @@ const fadeUp = (delay = 0) => ({
 export default function HomePage() {
   const theme   = useTheme()
   const now     = useClock()
+  const { usuario } = useAuth()
+  const esAnalista  = usuario?.rol === 'ANALISTA'
 
   const [stats, setStats] = useState([
     { label: 'Resguardos',  value: '—' },
@@ -77,19 +80,20 @@ export default function HomePage() {
   ])
 
   useEffect(() => {
+    // el analista no tiene acceso a /empleados ni /areas/listarTodas (solo ve resguardos)
     Promise.allSettled([
       api.get('/resguardos'),
-      api.get('/empleados'),
-      api.get('/areas/listarTodas'),
+      esAnalista ? Promise.resolve(null) : api.get('/empleados'),
+      esAnalista ? Promise.resolve(null) : api.get('/areas/listarTodas'),
     ]).then(([resguardos, empleados, areas]) => {
       setStats([
         { label: 'Resguardos',  value: resguardos.status === 'fulfilled' ? resguardos.value.data.length : '—' },
-        { label: 'Empleados',   value: empleados.status  === 'fulfilled' ? empleados.value.data.length  : '—' },
-        { label: 'Áreas',       value: areas.status      === 'fulfilled' ? areas.value.data.length      : '—' },
+        { label: 'Empleados',   value: empleados.status  === 'fulfilled' && empleados.value ? empleados.value.data.length : '—' },
+        { label: 'Áreas',       value: areas.status      === 'fulfilled' && areas.value      ? areas.value.data.length    : '—' },
         { label: 'Movimientos', value: '—' },
       ])
     })
-  }, [])
+  }, [esAnalista])
 
   const hh     = String(now.getHours()).padStart(2, '0')
   const mm     = String(now.getMinutes()).padStart(2, '0')

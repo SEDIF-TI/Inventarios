@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { sileo } from 'sileo'
 
 const api = axios.create({
   baseURL: '/api',
@@ -17,10 +18,19 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       sessionStorage.removeItem('accessToken')
+      sessionStorage.removeItem('userInfo')
       if (window.location.pathname !== '/login') {
         window.location.replace('/login')
       }
     }
+
+    if (error.response?.status === 403) {
+      sileo.error({
+        title: 'Acceso denegado',
+        description: error.response?.data?.message || 'No tienes permisos para realizar esta acción.',
+      })
+    }
+
     return Promise.reject(error)
   }
 )

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 import { Box, Card, TextField, Button, Typography, InputAdornment, IconButton, Stack } from '@mui/material'
 import { Visibility, VisibilityOff, Lock } from '@mui/icons-material'
 import { motion, AnimatePresence } from 'motion/react'
@@ -68,6 +69,7 @@ export default function LoginPage() {
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
 
   const navigate = useNavigate()
+  const { setUsuario } = useAuth()
 
   const [username, setUsername]         = useState('')
   const [password, setPassword]         = useState('')
@@ -86,6 +88,7 @@ export default function LoginPage() {
     try {
       const { data } = await api.post('/auth/login', { username, password })
       sessionStorage.setItem('accessToken', data.token)
+      setUsuario(data.userInfo)
       navigate('/home')
     } catch (err) {
       setError(err.response?.data?.message ?? 'Usuario o contraseña incorrectos.')

@@ -6,8 +6,10 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { CssBaseline, ThemeProvider, Box, GlobalStyles } from '@mui/material'
 import { Toaster } from 'sileo'
 import { LoadingProvider } from './context/LoadingContext'
+import { AuthProvider } from './context/AuthContext'
 import theme from './app/theme/theme'
 import Sidebar from './components/layout/Sidebar'
+import RequireRole from './components/layout/RequireRole'
 import { Fade } from '@mui/material'
 import LoadingScreen from './components/ui/LoadingScreen'
 import { useLoading } from './context/LoadingContext'
@@ -57,22 +59,30 @@ function App() {
         'html, body': { overflowX: 'hidden' },
       }} />
       <Toaster position="top-center" theme="light" duration={4000} />
-      <LoadingProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route element={<ProtectedLayout />}>
-              <Route path="/home"      element={<HomePage />} />
-              <Route path="/areas"       element={<AreasPage />} />
-              <Route path="/resguardos" element={<ResguardosPage />} />
-              <Route path="/empleados" element={<EmpleadosPage />} />
-              <Route path="/historial" element={<HistorialPage />} />
-              <Route path="/usuarios" element={<UsuariosPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </LoadingProvider>
+      <AuthProvider>
+        <LoadingProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route element={<ProtectedLayout />}>
+                <Route path="/home"       element={<HomePage />} />
+                <Route path="/resguardos" element={<ResguardosPage />} />
+                <Route path="/historial"  element={<HistorialPage />} />
+                <Route path="/areas" element={
+                  <RequireRole roles={['SUPERADMIN', 'ADMIN']}><AreasPage /></RequireRole>
+                } />
+                <Route path="/empleados" element={
+                  <RequireRole roles={['SUPERADMIN', 'ADMIN']}><EmpleadosPage /></RequireRole>
+                } />
+                <Route path="/usuarios" element={
+                  <RequireRole roles={['SUPERADMIN', 'ADMIN']}><UsuariosPage /></RequireRole>
+                } />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </LoadingProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

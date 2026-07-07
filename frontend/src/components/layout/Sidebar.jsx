@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Box, Tooltip, Typography } from '@mui/material'
 import { Player } from '@lordicon/react'
 import api from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 import corazon       from '@/assets/logos/corazon.png'
 import { ROUTES }   from '@/constants/routes'
 import icAreas       from '@/assets/icons/areas.json'
@@ -18,12 +19,14 @@ const W_CLOSED = 74
 const W_OPEN   = 232
 const MARGIN   = 12
 
+const ADMIN_ROLES = ['SUPERADMIN', 'ADMIN']
+
 const NAV_ITEMS = [
-  { label: 'Áreas',       icon: icAreas,       path: ROUTES.AREAS       },
-  { label: 'Empleados',   icon: icEmpleados,   path: ROUTES.EMPLEADOS   },
+  { label: 'Áreas',       icon: icAreas,       path: ROUTES.AREAS,       roles: ADMIN_ROLES },
+  { label: 'Empleados',   icon: icEmpleados,   path: ROUTES.EMPLEADOS,   roles: ADMIN_ROLES },
   { label: 'Resguardos',  icon: icResguardos,  path: ROUTES.RESGUARDOS  },
   { label: 'Historial',   icon: icHistorial,   path: ROUTES.HISTORIAL   },
-  { label: 'Usuarios',    icon: icUsuarios,    path: ROUTES.USUARIOS    },
+  { label: 'Usuarios',    icon: icUsuarios,    path: ROUTES.USUARIOS,   roles: ADMIN_ROLES },
   // { label: 'Importación', icon: icImportacion, path: ROUTES.IMPORTACION },
   // { label: 'Reportes',    icon: icReportes,    path: ROUTES.REPORTES    },
 ]
@@ -97,11 +100,11 @@ function NavItem({ label, icon, path, open }) {
   )
 }
 
-async function handleLogout(navigate) {
+async function handleLogout(navigate, logout) {
   try {
     await api.post('/auth/logout')
   } finally {
-    sessionStorage.removeItem('accessToken')
+    logout()
     navigate('/login', { replace: true })
   }
 }
@@ -111,6 +114,9 @@ export default function Sidebar() {
   const [logoutHovered, setLogoutHovered] = useState(false)
   const navigate                      = useNavigate()
   const logoutRef                     = useRef(null)
+  const { usuario, logout }           = useAuth()
+
+  const navItems = NAV_ITEMS.filter(item => !item.roles || item.roles.includes(usuario?.rol))
 
   return (
     <Box
@@ -164,7 +170,7 @@ export default function Sidebar() {
 
       {/* ── Nav ── */}
       <Box sx={{ flex: 1, py: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5, px: 1 }}>
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavItem key={item.path} {...item} open={open} />
         ))}
       </Box>
@@ -177,8 +183,8 @@ export default function Sidebar() {
           <Box
             role="button"
             tabIndex={0}
-            onClick={() => handleLogout(navigate)}
-            onKeyDown={(e) => e.key === 'Enter' && handleLogout(navigate)}
+            onClick={() => handleLogout(navigate, logout)}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogout(navigate, logout)}
             onMouseEnter={() => { setLogoutHovered(true); logoutRef.current?.playFromBeginning() }}
             onMouseLeave={() => setLogoutHovered(false)}
             sx={{
