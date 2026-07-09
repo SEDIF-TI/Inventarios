@@ -153,7 +153,7 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
               }
               value={empleadoSeleccionado}
               onChange={(_, v) => setForm(prev => ({ ...prev, idEmpleado: v?.id ?? '' }))}
-              renderInput={(params) => <TextField {...params} label="Empleado" />}
+              renderInput={(params) => <TextField {...params} label="Empleado" placeholder="Sin resguardante" />}
               noOptionsText="Sin resultados"
             />
           </Grid>
