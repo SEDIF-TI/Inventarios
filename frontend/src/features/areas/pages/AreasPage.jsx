@@ -9,7 +9,6 @@ import AppTable   from '@/components/ui/AppTable'
 import AreaDetalleModal from '../components/AreaDetalleModal'
 import AreaFormModal    from '../components/AreaFormModal'
 import api from '@/services/api'
-import { useLoading } from '@/context/LoadingContext'
 
 const COLUMNS = (onEdit) => [
   { key: 'codigo', label: 'Código', width: 140 },
@@ -60,8 +59,7 @@ export default function AreasPage() {
 
   const [detalle, setDetalle] = useState({ open: false, area: null })
   const [form,    setForm]    = useState({ open: false, mode: 'crear', area: null })
-
-  const { setLoading } = useLoading()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
@@ -131,6 +129,7 @@ export default function AreasPage() {
           onRowClick={openDetalle}
           rowsPerPage={12}
           resetKey={search}
+          isLoading={loading}
         />
 
       </Stack>

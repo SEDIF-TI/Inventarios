@@ -10,7 +10,6 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import AppTable       from '@/components/ui/AppTable'
 import UsuarioFormModal from '../components/UsuarioFormModal'
 import api             from '@/services/api'
-import { useLoading }  from '@/context/LoadingContext'
 import { sileo }       from 'sileo'
 
 const ROL_CHIP = {
@@ -58,8 +57,7 @@ export default function UsuariosPage() {
   const [usuarios,    setUsuarios]    = useState([])
   const [search,      setSearch]      = useState('')
   const [form,        setForm]        = useState({ open: false, mode: 'crear', usuario: null })
-
-  const { setLoading } = useLoading()
+  const [loading,     setLoading]     = useState(true)
 
   const cargar = () =>
     api.get('/usuarios').then(r => {
@@ -141,6 +139,7 @@ export default function UsuariosPage() {
           rows={usuarios}
           rowsPerPage={12}
           resetKey={search}
+          isLoading={loading}
         />
 
       </Stack>

@@ -3,8 +3,12 @@ import {
   Box, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Paper, Pagination, Typography,
 } from '@mui/material'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 
-export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, resetKey }) {
+const SKELETON_ROWS = 8
+
+export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, resetKey, isLoading = false }) {
   const [page, setPage] = useState(1)
 
   useEffect(() => { setPage(1) }, [resetKey])
@@ -45,7 +49,17 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
           </TableHead>
 
           <TableBody>
-            {visible.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  {columns.map((col) => (
+                    <TableCell key={col.key} sx={{ py: 1.5 }}>
+                      <Skeleton />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : visible.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">

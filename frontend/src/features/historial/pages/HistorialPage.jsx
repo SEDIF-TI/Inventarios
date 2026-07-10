@@ -7,7 +7,6 @@ import SearchIcon from '@mui/icons-material/Search'
 import AppTable from '@/components/ui/AppTable'
 import HistorialDetalleModal from '../components/HistorialDetalleModal'
 import api from '@/services/api'
-import { useLoading } from '@/context/LoadingContext'
 
 const MOVIMIENTO_CONFIG = {
   ALTA:        { label: 'Alta',        color: 'success' },
@@ -61,7 +60,7 @@ export default function HistorialPage() {
   const [search,       setSearch]       = useState('')
   const [filtroTipo,   setFiltroTipo]   = useState('')
   const [detalle,      setDetalle]      = useState({ open: false, movimiento: null })
-  const { setLoading } = useLoading()
+  const [loading,      setLoading]      = useState(true)
 
   const openDetalle  = (row) => setDetalle({ open: true, movimiento: row })
   const closeDetalle = ()    => setDetalle({ open: false, movimiento: null })
@@ -142,6 +141,7 @@ export default function HistorialPage() {
         onRowClick={openDetalle}
         rowsPerPage={12}
         resetKey={search + filtroTipo}
+        isLoading={loading}
       />
 
     </Stack>

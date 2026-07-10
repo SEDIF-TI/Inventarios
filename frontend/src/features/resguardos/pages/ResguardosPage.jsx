@@ -19,7 +19,6 @@ import ResguardoFormModal    from '../components/ResguardoFormModal'
 import ResguardoAccionModal  from '../components/ResguardoAccionModal'
 import ImprimirModal         from '../components/ImprimirModal'
 import api             from '@/services/api'
-import { useLoading }  from '@/context/LoadingContext'
 import { sileo }       from 'sileo'
 
 const FADE = {
@@ -119,8 +118,7 @@ export default function ResguardosPage() {
   const [selectedIds,   setSelectedIds]   = useState(new Set())
   const [filtroArea,    setFiltroArea]    = useState('')
   const [filtroFecha,   setFiltroFecha]   = useState('')
-
-  const { setLoading } = useLoading()
+  const [loading,       setLoading]       = useState(true)
 
   useEffect(() => {
     setLoading(true)
@@ -420,6 +418,7 @@ export default function ResguardosPage() {
               onRowClick={modoImpresion ? (row) => toggleSelect(row.id) : openDetalle}
               rowsPerPage={12}
               resetKey={search + modoImpresion + filtroArea + filtroFecha}
+              isLoading={loading}
             />
           </motion.div>
         </AnimatePresence>

@@ -9,7 +9,6 @@ import AppTable      from '@/components/ui/AppTable'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
 import EmpleadoFormModal    from '../components/EmpleadoFormModal'
 import api from '@/services/api'
-import { useLoading } from '@/context/LoadingContext'
 
 const COLUMNS = (onEdit) => [
   { key: 'noControlEmpleado', label: 'No. Control', width: 130 },
@@ -71,8 +70,7 @@ export default function EmpleadosPage() {
 
   const [detalle, setDetalle] = useState({ open: false, empleado: null })
   const [form,    setForm]    = useState({ open: false, mode: 'crear', empleado: null })
-
-  const { setLoading } = useLoading()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
@@ -150,6 +148,7 @@ export default function EmpleadosPage() {
           onRowClick={openDetalle}
           rowsPerPage={12}
           resetKey={search}
+          isLoading={loading}
         />
 
       </Stack>
