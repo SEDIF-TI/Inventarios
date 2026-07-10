@@ -8,6 +8,8 @@ import AppModal from '@/components/ui/AppModal'
 import { sileo } from 'sileo'
 import api from '@/services/api'
 
+const SIN_RESGUARDANTE = { id: '', esSinResguardante: true }
+
 function Seccion({ label }) {
   return (
     <Box sx={{ pt: 0.5 }}>
@@ -111,7 +113,9 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
   }
 
   const areaSeleccionada     = areas.find(a => a.id === form.idAreaAdscripcion)     ?? null
-  const empleadoSeleccionado = empleados.find(e => e.id === form.idEmpleado) ?? null
+  const empleadoSeleccionado = form.idEmpleado
+    ? (empleados.find(e => e.id === form.idEmpleado) ?? null)
+    : SIN_RESGUARDANTE
 
   const actions = (
     <>
@@ -146,14 +150,17 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
           </Grid>
           <Grid size={6}>
             <Autocomplete
-              options={empleados}
+              options={[SIN_RESGUARDANTE, ...empleados]}
               getOptionLabel={(e) =>
-                [e.apellidoPaternoEmpleado, e.apellidoMaternoEmpleado, e.nombreEmpleado]
-                  .filter(Boolean).join(' ')
+                e.esSinResguardante
+                  ? 'Sin resguardante'
+                  : [e.apellidoPaternoEmpleado, e.apellidoMaternoEmpleado, e.nombreEmpleado]
+                      .filter(Boolean).join(' ')
               }
+              isOptionEqualToValue={(option, value) => option.id === value.id}
               value={empleadoSeleccionado}
               onChange={(_, v) => setForm(prev => ({ ...prev, idEmpleado: v?.id ?? '' }))}
-              renderInput={(params) => <TextField {...params} label="Empleado" placeholder="Sin resguardante" />}
+              renderInput={(params) => <TextField {...params} label="Empleado" />}
               noOptionsText="Sin resultados"
             />
           </Grid>
