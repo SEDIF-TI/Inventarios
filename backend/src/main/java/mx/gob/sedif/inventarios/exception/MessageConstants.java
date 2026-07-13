@@ -14,4 +14,5 @@ public class MessageConstants {
     public static final String ERROR_INTEGRIDAD = "Error de integridad de datos";
     public static final String SOLICITUD_MAL_FORMADA = "Solicitud mal formada";
     public static final String METODO_NO_SOPORTADO = "Método HTTP no soportado";
+    public static final String ROL_NO_PERMITIDO = "No tienes permisos para asignar el rol %s";
 }

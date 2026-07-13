@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 @RestController
-@RequestMapping("/api/Historial")
+@RequestMapping("/api/historial")
 @RequiredArgsConstructor
 public class HistorialResguardoResource {
 

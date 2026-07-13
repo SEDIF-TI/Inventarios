@@ -3,6 +3,7 @@ package mx.gob.sedif.inventarios.core.Usuario;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class UsuarioService {
             throw new DuplicateResourceException(
                 MessageConstants.USUARIO_DUPLICADO.formatted(request.nombreUsuario()));
         }
+        validarAsignacionRol(request.rol());
 
         Usuario usuario = new Usuario();
         mapearCampos(usuario, request);
@@ -62,6 +64,7 @@ public class UsuarioService {
             usuario.setPassword(passwordEncoder.encode(request.password()));
         }
         if (request.rol() != null) {
+            validarAsignacionRol(request.rol());
             usuario.setRol(request.rol());
         }
         if (request.activo() != null) {
@@ -84,6 +87,17 @@ public class UsuarioService {
     }
 
     //METODOS PRIVADOS-----
+
+    private void validarAsignacionRol(Rol rolSolicitado) {
+        String nombreActual = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario actual = usuarioRepository.findByNombreUsuario(nombreActual)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.USUARIO_NO_ENCONTRADO));
+
+        if (actual.getRol() == Rol.ADMIN && rolSolicitado == Rol.SUPERADMIN) {
+            throw new InvalidOperationException(
+                MessageConstants.ROL_NO_PERMITIDO.formatted(rolSolicitado));
+        }
+    }
 
     private void mapearCampos(Usuario usuario, UsuarioRequest request) {
         usuario.setNombreUsuario(request.nombreUsuario());

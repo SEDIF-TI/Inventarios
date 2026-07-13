@@ -33,7 +33,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String token = getTokenFromRequest(request);
-        log.debug("Token recibido: {}", token);
 
         if(StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             String username = jwtTokenProvider.getUsernameFromToken(token);

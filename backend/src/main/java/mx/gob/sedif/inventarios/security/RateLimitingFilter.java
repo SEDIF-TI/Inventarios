@@ -2,14 +2,14 @@ package mx.gob.sedif.inventarios.security;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
@@ -24,7 +24,11 @@ import mx.gob.sedif.inventarios.exception.ApiResponse;
 @RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterAccess(Duration.ofMinutes(5))
+        .build();
+
     private final ObjectMapper objectMapper;
 
     private Bucket newBucket() {
@@ -47,8 +51,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         @NonNull HttpServletResponse response,
         @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-            String key = request.getRequestURI() + ":" + request.getRemoteAddr();
-            Bucket bucket = buckets.computeIfAbsent(key, k -> newBucket());
+            String key = request.getRemoteAddr();
+            Bucket bucket = buckets.get(key, k -> newBucket());
 
             if (bucket.tryConsume(1)) {
                 filterChain.doFilter(request, response);

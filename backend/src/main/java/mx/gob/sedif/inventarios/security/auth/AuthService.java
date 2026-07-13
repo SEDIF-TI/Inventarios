@@ -24,6 +24,7 @@ import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.exception.RefreshTokenException;
 import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
 import mx.gob.sedif.inventarios.security.JwtTokenProvider;
+import mx.gob.sedif.inventarios.security.RefreshTokenBlacklist;
 
 @Slf4j
 @Service
@@ -37,6 +38,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
     private final UserDetailsService userDetailsService;
+    private final RefreshTokenBlacklist refreshTokenBlacklist;
 
     @Transactional
     public JwtResponse login(LoginRequest request, HttpServletResponse response) {
@@ -70,6 +72,10 @@ public class AuthService {
             throw new RefreshTokenException(MessageConstants.REFRESH_TOKEN_INVALIDO);
         }
 
+        if (refreshTokenBlacklist.isRevoked(refreshToken)) {
+            throw new RefreshTokenException(MessageConstants.REFRESH_TOKEN_INVALIDO);
+        }
+
         String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -90,7 +96,12 @@ public class AuthService {
         return new JwtResponse(newAccessToken, userInfo);
     }
 
-    public void logout(HttpServletResponse response) {
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshCookie(request);
+        if (refreshToken != null) {
+            refreshTokenBlacklist.revoke(refreshToken);
+        }
+
         ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE_NAME, "")
             .httpOnly(true)
             .secure(true)
