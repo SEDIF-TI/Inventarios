@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Box, Typography, Button, TextField, InputAdornment, Stack, Chip,
   IconButton, Tooltip,
@@ -11,6 +11,8 @@ import AppTable       from '@/components/ui/AppTable'
 import UsuarioFormModal from '../components/UsuarioFormModal'
 import api             from '@/services/api'
 import { sileo }       from 'sileo'
+import useDebounce        from '@/hooks/useDebounce'
+import useListadoPaginado from '@/hooks/useListadoPaginado'
 
 const ROL_CHIP = {
   SUPERADMIN: { label: 'Superadmin', color: 'error'   },
@@ -52,34 +54,18 @@ const COLUMNS = (onEdit, onEliminar) => [
   },
 ]
 
+const TAM_PAGINA = 15
+
 export default function UsuariosPage() {
-  const [allUsuarios, setAllUsuarios] = useState([])
-  const [usuarios,    setUsuarios]    = useState([])
-  const [search,      setSearch]      = useState('')
-  const [form,        setForm]        = useState({ open: false, mode: 'crear', usuario: null })
-  const [loading,     setLoading]     = useState(true)
+  const [search, setSearch] = useState('')
+  const q = useDebounce(search)
 
-  const cargar = () =>
-    api.get('/usuarios').then(r => {
-      setAllUsuarios(r.data)
-      setUsuarios(r.data)
-    })
+  const [form, setForm] = useState({ open: false, mode: 'crear', usuario: null })
 
-  useEffect(() => {
-    setLoading(true)
-    cargar().finally(() => setLoading(false))
-  }, [])
+  const { rows: usuarios, page, setPage, totalPages, total, loading, recargar } =
+    useListadoPaginado('/usuarios', { q }, TAM_PAGINA)
 
-  useEffect(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) { setUsuarios(allUsuarios); return }
-    setUsuarios(allUsuarios.filter(u =>
-      (u.nombreUsuario || '').toLowerCase().includes(q) ||
-      (u.rol           || '').toLowerCase().includes(q)
-    ))
-  }, [search, allUsuarios])
-
-  const refresh = () => cargar().then(() => setSearch(''))
+  const refresh = () => { setSearch(''); return recargar() }
 
   const openEdit  = (row) => setForm({ open: true, mode: 'editar', usuario: row })
   const closeForm = ()    => setForm({ open: false, mode: 'crear', usuario: null })
@@ -137,8 +123,10 @@ export default function UsuariosPage() {
         <AppTable
           columns={COLUMNS(openEdit, handleEliminar)}
           rows={usuarios}
-          rowsPerPage={12}
-          resetKey={search}
+          page={page}
+          pageCount={totalPages}
+          onPageChange={setPage}
+          totalElements={total}
           isLoading={loading}
         />
 

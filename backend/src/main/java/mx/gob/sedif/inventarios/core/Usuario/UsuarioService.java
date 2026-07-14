@@ -1,7 +1,6 @@
 package mx.gob.sedif.inventarios.core.Usuario;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,6 +12,8 @@ import mx.gob.sedif.inventarios.exception.DuplicateResourceException;
 import mx.gob.sedif.inventarios.exception.InvalidOperationException;
 import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
+import mx.gob.sedif.inventarios.util.PagedResponse;
+import mx.gob.sedif.inventarios.util.Paginacion;
 import mx.gob.sedif.inventarios.util.enums.Rol;
 
 @Service
@@ -23,10 +24,19 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public List<UsuarioRecord> listarUsuarios() {
-        return usuarioRepository.findAll().stream()
-            .map(this::toRecord)
-            .toList();
+    public PagedResponse<UsuarioRecord> buscarUsuarios(
+        String q, String nombreUsuario, Rol rol, Boolean activo, Pageable pageable
+    ) {
+        Specification<Usuario> spec = Specification.allOf(
+            UsuarioSpec.porBusqueda(q),
+            UsuarioSpec.porNombreUsuario(nombreUsuario),
+            UsuarioSpec.porRol(rol),
+            UsuarioSpec.porActivo(activo)
+        );
+
+        return PagedResponse.from(
+            usuarioRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+        );
     }
 
     @Transactional
@@ -72,18 +82,6 @@ public class UsuarioService {
         }
 
         return toRecord(usuarioRepository.save(usuario));
-    }
-
-    @Transactional(readOnly = true)
-    public List<UsuarioRecord> filtrarUsuarios(String nombreUsuario, Rol rol, Boolean activo) {
-        Specification<Usuario> spec = Specification
-            .where(UsuarioSpec.porNombreUsuario(nombreUsuario))
-            .and(UsuarioSpec.porRol(rol))
-            .and(UsuarioSpec.porActivo(activo));
-
-        return usuarioRepository.findAll(spec).stream()
-            .map(this::toRecord)
-            .toList();
     }
 
     //METODOS PRIVADOS-----

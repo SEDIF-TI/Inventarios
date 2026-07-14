@@ -80,17 +80,23 @@ export default function HomePage() {
   ])
 
   useEffect(() => {
-    // el analista no tiene acceso a /empleados ni /areas/listarTodas (solo ve resguardos)
+    // Solo interesa el total, no las filas: se pide size=1 y se lee totalElements. Antes se
+    // descargaba la tabla entera de cada recurso para hacerle un .length.
+    const contar = (url) => api.get(url, { params: { page: 0, size: 1 } })
+    const total  = (r) => (r.status === 'fulfilled' && r.value ? r.value.data.totalElements : '—')
+
+    // el analista no tiene acceso a /empleados ni /areas (solo ve resguardos e historial)
     Promise.allSettled([
-      api.get('/resguardos'),
-      esAnalista ? Promise.resolve(null) : api.get('/empleados'),
-      esAnalista ? Promise.resolve(null) : api.get('/areas/listarTodas'),
-    ]).then(([resguardos, empleados, areas]) => {
+      contar('/resguardos'),
+      esAnalista ? Promise.resolve(null) : contar('/empleados'),
+      esAnalista ? Promise.resolve(null) : contar('/areas'),
+      contar('/historial'),
+    ]).then(([resguardos, empleados, areas, movimientos]) => {
       setStats([
-        { label: 'Resguardos',  value: resguardos.status === 'fulfilled' ? resguardos.value.data.length : '—' },
-        { label: 'Empleados',   value: empleados.status  === 'fulfilled' && empleados.value ? empleados.value.data.length : '—' },
-        { label: 'Áreas',       value: areas.status      === 'fulfilled' && areas.value      ? areas.value.data.length    : '—' },
-        { label: 'Movimientos', value: '—' },
+        { label: 'Resguardos',  value: total(resguardos)  },
+        { label: 'Empleados',   value: total(empleados)   },
+        { label: 'Áreas',       value: total(areas)       },
+        { label: 'Movimientos', value: total(movimientos) },
       ])
     })
   }, [esAnalista])

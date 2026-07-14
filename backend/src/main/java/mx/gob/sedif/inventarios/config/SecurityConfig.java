@@ -70,7 +70,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/usuarios/**").hasAnyRole("SUPERADMIN", "ADMIN")
                 .requestMatchers("/api/resguardos/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
-                .requestMatchers("/api/Historial/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
+                .requestMatchers("/api/historial/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
                 .requestMatchers(HttpMethod.GET, "/api/areas/listarActivas").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
                 .requestMatchers(HttpMethod.GET, "/api/empleados/listarActivos").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
                 .requestMatchers("/api/**").hasAnyRole("SUPERADMIN", "ADMIN")

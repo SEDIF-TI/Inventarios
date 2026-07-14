@@ -2,6 +2,7 @@ package mx.gob.sedif.inventarios.core.Empleado;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,8 @@ import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcionRepository;
 import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
+import mx.gob.sedif.inventarios.util.PagedResponse;
+import mx.gob.sedif.inventarios.util.Paginacion;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +23,23 @@ public class EmpleadoService {
     private final AreaAdscripcionRepository areaAdscripcionRepository;
 
     @Transactional(readOnly = true)
-    public List<EmpleadoRecord> listarEmpleados() {
-        return empleadoRepository.findAllConArea().stream()
-            .map(this::toRecord)
-            .toList();
+    public PagedResponse<EmpleadoRecord> buscarEmpleados(
+        String q, String nombre, String apellidoPaterno, String apellidoMaterno,
+        String noControl, String area, Boolean activo, Pageable pageable
+    ) {
+        Specification<Empleado> spec = Specification.allOf(
+            EmpleadoSpec.porBusqueda(q),
+            EmpleadoSpec.porActivo(activo),
+            EmpleadoSpec.porNombre(nombre),
+            EmpleadoSpec.porApellidoPaterno(apellidoPaterno),
+            EmpleadoSpec.porApellidoMaterno(apellidoMaterno),
+            EmpleadoSpec.porNoControl(noControl),
+            EmpleadoSpec.porArea(area)
+        );
+
+        return PagedResponse.from(
+            empleadoRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+        );
     }
 
     @Transactional
@@ -45,20 +61,6 @@ public class EmpleadoService {
     @Transactional(readOnly = true)
     public List<EmpleadoRecord> listarEmpleadosActivos() {
         return empleadoRepository.findAllActivos().stream()
-            .map(this::toRecord)
-            .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<EmpleadoRecord> filtrarEmpleados(String nombre, String apellidoPaterno, String apellidoMaterno, String noControl, String area) {
-        Specification<Empleado> spec = Specification
-            .where(EmpleadoSpec.porNombre(nombre))
-            .and(EmpleadoSpec.porApellidoPaterno(apellidoPaterno))
-            .and(EmpleadoSpec.porApellidoMaterno(apellidoMaterno))
-            .and(EmpleadoSpec.porNoControl(noControl))
-            .and(EmpleadoSpec.porArea(area));
-
-        return empleadoRepository.findAll(spec).stream()
             .map(this::toRecord)
             .toList();
     }

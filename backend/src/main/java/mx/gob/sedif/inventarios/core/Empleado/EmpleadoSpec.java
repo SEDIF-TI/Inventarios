@@ -8,6 +8,29 @@ import mx.gob.sedif.inventarios.core.AreaAdscripcion.AreaAdscripcion;
 
 public class EmpleadoSpec {
 
+    /** Búsqueda rápida con OR sobre los campos que muestra la tabla. */
+    public static Specification<Empleado> porBusqueda(String q) {
+        return (root, query, cb) -> {
+            if (q == null || q.isBlank()) return null;
+
+            String patron = "%" + q.toUpperCase() + "%";
+            Join<Empleado, AreaAdscripcion> area = root.join("areaAdscripcion", JoinType.LEFT);
+
+            return cb.or(
+                cb.like(cb.upper(root.get("noControlEmpleado")), patron),
+                cb.like(cb.upper(root.get("nombreEmpleado")), patron),
+                cb.like(cb.upper(root.get("apellidoPaternoEmpleado")), patron),
+                cb.like(cb.upper(root.get("apellidoMaternoEmpleado")), patron),
+                cb.like(cb.upper(area.get("descripcionAreaAdscripcion")), patron)
+            );
+        };
+    }
+
+    public static Specification<Empleado> porActivo(Boolean activo) {
+        return (root, query, cb) -> activo == null ? null
+            : cb.equal(root.get("empleadoActivo"), activo);
+    }
+
     public static Specification<Empleado> porNombre(String nombre) {
         return (root, query, cb) -> nombre == null || nombre.isBlank() ? null
             : cb.like(cb.upper(root.get("nombreEmpleado")), "%" + nombre.toUpperCase() + "%");

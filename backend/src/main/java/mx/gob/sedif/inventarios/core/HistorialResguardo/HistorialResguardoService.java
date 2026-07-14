@@ -1,8 +1,11 @@
 package mx.gob.sedif.inventarios.core.HistorialResguardo;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -11,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.core.Resguardo.Resguardo;
 import mx.gob.sedif.inventarios.core.Usuario.UsuarioRepository;
+import mx.gob.sedif.inventarios.util.PagedResponse;
+import mx.gob.sedif.inventarios.util.Paginacion;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
 @Service
@@ -20,11 +25,26 @@ public class HistorialResguardoService {
     private final HistorialResguardoRepository historialRepository;
     private final UsuarioRepository usuarioRepository;
 
+    /** Orden por defecto: lo más reciente primero, que es como se lee un historial. */
+    private static final Sort MAS_RECIENTE_PRIMERO = Sort.by(Sort.Order.desc("fechaMovimiento"));
+
     @Transactional(readOnly = true)
-    public List<HistorialResguardoRecord> listarHistorial() {
-        return historialRepository.findAllConRelaciones().stream()
-            .map(this::toRecord)
-            .toList();
+    public PagedResponse<HistorialResguardoRecord> buscarHistorial(
+        Integer idResguardo, Movimiento tipoMovimiento, LocalDate fechaDesde, LocalDate fechaHasta,
+        String q, Pageable pageable
+    ) {
+        Specification<HistorialResguardo> spec = Specification.allOf(
+            HistorialResguardoSpec.porIdResguardo(idResguardo),
+            HistorialResguardoSpec.porTipoMovimiento(tipoMovimiento),
+            HistorialResguardoSpec.desde(fechaDesde),
+            HistorialResguardoSpec.hasta(fechaHasta),
+            HistorialResguardoSpec.porBusqueda(q)
+        );
+
+        return PagedResponse.from(
+            historialRepository.findAll(spec, Paginacion.conOrden(pageable, MAS_RECIENTE_PRIMERO))
+                .map(this::toRecord)
+        );
     }
 
     @Transactional

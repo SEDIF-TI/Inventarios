@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Box, Typography, TextField, InputAdornment, Stack, Chip, Select,
   MenuItem, FormControl, InputLabel,
@@ -6,13 +6,18 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import AppTable from '@/components/ui/AppTable'
 import HistorialDetalleModal from '../components/HistorialDetalleModal'
-import api from '@/services/api'
+import useDebounce        from '@/hooks/useDebounce'
+import useListadoPaginado from '@/hooks/useListadoPaginado'
 
+// Las claves deben coincidir carácter a carácter con el enum Movimiento del backend: ahora
+// viajan como filtro en la query string. La clave de reasignación llevaba tilde y por eso
+// ese filtro nunca casaba con nada; ASIGNACION faltaba directamente.
 const MOVIMIENTO_CONFIG = {
-  ALTA:        { label: 'Alta',        color: 'success' },
-  BAJA:        { label: 'Baja',        color: 'error'   },
-  DISPONIBLE:  { label: 'Disponible',  color: 'info'    },
-  REASIGNACIÓN:{ label: 'Reasignación',color: 'warning' },
+  ALTA:         { label: 'Alta',         color: 'success' },
+  BAJA:         { label: 'Baja',         color: 'error'   },
+  DISPONIBLE:   { label: 'Disponible',   color: 'info'    },
+  ASIGNACION:   { label: 'Asignación',   color: 'primary' },
+  REASIGNACION: { label: 'Reasignación', color: 'warning' },
 }
 
 function formatFecha(isoString) {
@@ -54,42 +59,22 @@ const COLUMNS = [
   },
 ]
 
+const TAM_PAGINA = 12
+
 export default function HistorialPage() {
-  const [allHistorial, setAllHistorial] = useState([])
-  const [historial,    setHistorial]    = useState([])
-  const [search,       setSearch]       = useState('')
-  const [filtroTipo,   setFiltroTipo]   = useState('')
-  const [detalle,      setDetalle]      = useState({ open: false, movimiento: null })
-  const [loading,      setLoading]      = useState(true)
+  const [search,     setSearch]     = useState('')
+  const [filtroTipo, setFiltroTipo] = useState('')
+  const [detalle,    setDetalle]    = useState({ open: false, movimiento: null })
+
+  const q = useDebounce(search)
 
   const openDetalle  = (row) => setDetalle({ open: true, movimiento: row })
   const closeDetalle = ()    => setDetalle({ open: false, movimiento: null })
 
-  useEffect(() => {
-    setLoading(true)
-    api.get('/Historial')
-      .then((r) => {
-        setAllHistorial(r.data)
-        setHistorial(r.data)
-      })
-      .finally(() => setLoading(false))
-  }, [])
-
-  useEffect(() => {
-    const q = search.trim().toLowerCase()
-    setHistorial(
-      allHistorial.filter((h) => {
-        const matchTipo = !filtroTipo || h.tipoMovimiento === filtroTipo
-        const matchText = !q ||
-          (h.descripcionBien  || '').toLowerCase().includes(q) ||
-          (h.empleado         || '').toLowerCase().includes(q) ||
-          (h.areaAdscripcion  || '').toLowerCase().includes(q) ||
-          (h.observacion      || '').toLowerCase().includes(q) ||
-          (h.nombreUsuario    || '').toLowerCase().includes(q)
-        return matchTipo && matchText
-      })
-    )
-  }, [search, filtroTipo, allHistorial])
+  // La ruta iba con H mayúscula («/Historial») y el enrutado de Spring distingue
+  // mayúsculas: devolvía 404 y la tabla salía siempre vacía.
+  const { rows: historial, page, setPage, totalPages, total, loading } =
+    useListadoPaginado('/historial', { q, tipoMovimiento: filtroTipo }, TAM_PAGINA)
 
   return (
     <>
@@ -139,8 +124,10 @@ export default function HistorialPage() {
         columns={COLUMNS}
         rows={historial}
         onRowClick={openDetalle}
-        rowsPerPage={12}
-        resetKey={search + filtroTipo}
+        page={page}
+        pageCount={totalPages}
+        onPageChange={setPage}
+        totalElements={total}
         isLoading={loading}
       />
 

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import mx.gob.sedif.inventarios.util.PagedResponse;
 
 
 @RestController
@@ -26,10 +29,10 @@ public class ResguardoResource {
     private final ResguardoService resguardoService;
 
     @GetMapping()
-    public ResponseEntity<List<ResguardoRecord>> listar() {
-        return ResponseEntity.ok(resguardoService.listarResguardos());
+    public ResponseEntity<PagedResponse<ResguardoRecord>> buscar(ResguardoFiltro filtro, Pageable pageable) {
+        return ResponseEntity.ok(resguardoService.buscarResguardos(filtro, pageable));
     }
-    
+
     @PostMapping("/crear")
     public ResponseEntity<ResguardoRecord> crear(@Valid @RequestBody ResguardoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -41,16 +44,6 @@ public class ResguardoResource {
         return ResponseEntity.ok(resguardoService.actualizarResguardo(id, request));
     }
 
-    @GetMapping("/filtrar")
-    public ResponseEntity<List<ResguardoRecord>> filtrar(
-        @RequestParam(required = false) String area,
-        @RequestParam(required = false) String descripcion,
-        @RequestParam(required = false) String empleado,
-        @RequestParam(required = false) String noInventario
-    ) {
-        return ResponseEntity.ok(resguardoService.filtrarResguardos(area, descripcion, empleado, noInventario));
-    }
-    
     @GetMapping("/etiquetas")
     public ResponseEntity<List<EtiquetaRecord>> obtenerEtiquetas(
         @RequestParam List<Integer> ids

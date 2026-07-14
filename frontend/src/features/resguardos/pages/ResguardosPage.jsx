@@ -20,6 +20,10 @@ import ResguardoAccionModal  from '../components/ResguardoAccionModal'
 import ImprimirModal         from '../components/ImprimirModal'
 import api             from '@/services/api'
 import { sileo }       from 'sileo'
+import useDebounce        from '@/hooks/useDebounce'
+import useListadoPaginado from '@/hooks/useListadoPaginado'
+
+const TAM_PAGINA = 12
 
 const FADE = {
   initial:    { opacity: 0, y: -8 },
@@ -28,16 +32,19 @@ const FADE = {
   transition: { duration: 0.18    },
 }
 
-const checkCol = (selectedIds, toggle) => ({
+// Recibe la fila entera, no solo el id: con la tabla paginada las filas de otras páginas ya
+// no están en memoria, así que la selección tiene que guardarse consigo misma para poder
+// generar las etiquetas de bienes que ya no se están mostrando.
+const checkCol = (seleccionados, toggle) => ({
   key: 'check',
   label: '',
   width: 52,
   render: (row) => (
     <Checkbox
-      checked={selectedIds.has(row.id)}
+      checked={seleccionados.has(row.id)}
       size="small"
       onClick={e => e.stopPropagation()}
-      onChange={() => toggle(row.id)}
+      onChange={() => toggle(row)}
       sx={{ p: 0.5 }}
     />
   ),
@@ -74,7 +81,7 @@ const COLS_NORMAL = (onEdit) => [
   },
 ]
 
-const COLS_ETIQUETAS = (selectedIds, toggle) => [
+const COLS_ETIQUETAS = (seleccionados, toggle) => [
   { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140 },
   { key: 'descripcionBien',     label: 'Descripción'                 },
   { key: 'marcaBien',           label: 'Marca',           width: 120 },
@@ -82,10 +89,10 @@ const COLS_ETIQUETAS = (selectedIds, toggle) => [
   { key: 'noSerieBien',         label: 'No. Serie',       width: 150 },
   { key: 'areaAdscripcion',     label: 'Área'                        },
   { key: 'fechaAsignacionBien', label: 'Fecha Asignación',width: 150 },
-  checkCol(selectedIds, toggle),
+  checkCol(seleccionados, toggle),
 ]
 
-const COLS_FORMATOS = (selectedIds, toggle) => [
+const COLS_FORMATOS = (seleccionados, toggle) => [
   { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140 },
   { key: 'cogBien',             label: 'COG',             width: 90  },
   { key: 'descripcionBien',     label: 'Descripción'                 },
@@ -99,15 +106,13 @@ const COLS_FORMATOS = (selectedIds, toggle) => [
       <Chip label={row.activo ? 'Activo' : 'Inactivo'} color={row.activo ? 'success' : 'default'} size="small" />
     ),
   },
-  checkCol(selectedIds, toggle),
+  checkCol(seleccionados, toggle),
 ]
 
 export default function ResguardosPage() {
-  const [allResguardos, setAllResguardos] = useState([])
-  const [resguardos,    setResguardos]    = useState([])
-  const [areas,         setAreas]         = useState([])
-  const [empleados,     setEmpleados]     = useState([])
-  const [search,        setSearch]        = useState('')
+  const [areas,     setAreas]     = useState([])
+  const [empleados, setEmpleados] = useState([])
+  const [search,    setSearch]    = useState('')
 
   const [detalle,        setDetalle]        = useState({ open: false, resguardo: null })
   const [form,           setForm]           = useState({ open: false, mode: 'crear', resguardo: null })
@@ -115,50 +120,32 @@ export default function ResguardosPage() {
   const [modalImprimir,  setModalImprimir]  = useState(false)
 
   const [modoImpresion, setModoImpresion] = useState(null)
-  const [selectedIds,   setSelectedIds]   = useState(new Set())
-  const [filtroArea,    setFiltroArea]    = useState('')
+  const [seleccionados, setSeleccionados] = useState(new Map()) // id -> fila
+  const [filtroArea,    setFiltroArea]    = useState(null)      // objeto área, no su descripción
   const [filtroFecha,   setFiltroFecha]   = useState('')
-  const [loading,       setLoading]       = useState(true)
 
+  const q = useDebounce(search)
+
+  // El modo impresión filtra por área y fecha; el modo normal, por el buscador. Se envía solo
+  // lo que aplica al modo activo para no arrastrar filtros invisibles al cambiar de uno a otro.
+  const filtros = modoImpresion
+    ? { idArea: filtroArea?.id ?? '', fechaAsignacion: filtroFecha }
+    : { q }
+
+  const { rows: resguardos, page, setPage, totalPages, total, loading, recargar } =
+    useListadoPaginado('/resguardos', filtros, TAM_PAGINA)
+
+  // Catálogos para los selects del formulario: se piden una vez y no se paginan.
   useEffect(() => {
-    setLoading(true)
     Promise.all([
-      api.get('/resguardos'),
       api.get('/areas/listarActivas'),
       api.get('/empleados/listarActivos'),
     ])
-      .then(([r, a, e]) => {
-        setAllResguardos(r.data)
-        setResguardos(r.data)
-        setAreas(a.data)
-        setEmpleados(e.data)
-      })
-      .finally(() => setLoading(false))
+      .then(([a, e]) => { setAreas(a.data); setEmpleados(e.data) })
+      .catch(() => { setAreas([]); setEmpleados([]) })
   }, [])
 
-  useEffect(() => {
-    let filtered = allResguardos
-    if (modoImpresion) {
-      if (filtroArea)  filtered = filtered.filter(r => r.areaAdscripcion === filtroArea)
-      if (filtroFecha) filtered = filtered.filter(r => r.fechaAsignacionBien === filtroFecha)
-    } else {
-      const q = search.trim().toLowerCase()
-      if (q) filtered = filtered.filter(r =>
-        (r.empleado         || '').toLowerCase().includes(q) ||
-        (r.areaAdscripcion  || '').toLowerCase().includes(q) ||
-        (r.noInventarioBien || '').toLowerCase().includes(q) ||
-        (r.descripcionBien  || '').toLowerCase().includes(q)
-      )
-    }
-    setResguardos(filtered)
-  }, [search, filtroArea, filtroFecha, modoImpresion, allResguardos])
-
-  const refresh = () =>
-    api.get('/resguardos').then(r => {
-      setAllResguardos(r.data)
-      setResguardos(r.data)
-      setSearch('')
-    })
+  const refresh = () => { setSearch(''); return recargar() }
 
   const openEdit     = (row) => setForm({ open: true, mode: 'editar', resguardo: row })
   const openDetalle  = (row) => setDetalle({ open: true, resguardo: row })
@@ -169,24 +156,25 @@ export default function ResguardosPage() {
   const closeAccion = ()     => setAccion({ open: false, tipo: null, resguardo: null })
   const onAccionExitosa = () => { refresh(); closeDetalle() }
 
-  const toggleSelect = (id) =>
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+  // La selección sobrevive al cambio de página: se guarda la fila completa, no solo el id.
+  const toggleSelect = (row) =>
+    setSeleccionados(prev => {
+      const next = new Map(prev)
+      next.has(row.id) ? next.delete(row.id) : next.set(row.id, row)
       return next
     })
 
   const entrarModo = (tipo) => {
     setModoImpresion(tipo)
-    setSelectedIds(new Set())
-    setFiltroArea('')
+    setSeleccionados(new Map())
+    setFiltroArea(null)
     setFiltroFecha('')
   }
 
   const salirModo = () => {
     setModoImpresion(null)
-    setSelectedIds(new Set())
-    setFiltroArea('')
+    setSeleccionados(new Map())
+    setFiltroArea(null)
     setFiltroFecha('')
   }
 
@@ -211,7 +199,7 @@ export default function ResguardosPage() {
 
   const handleDescargar = async () => {
     if (modoImpresion === 'formatos') {
-      const ids = Array.from(selectedIds)
+      const ids = Array.from(seleccionados.keys())
 
       const promise = Promise.all([
         api.get('/resguardos/formato', { params: { ids } }),
@@ -246,8 +234,7 @@ export default function ResguardosPage() {
     }
 
     if (modoImpresion === 'etiquetas') {
-      const seleccionados = allResguardos.filter(r => selectedIds.has(r.id))
-      const etiquetas = seleccionados.map(r => ({
+      const etiquetas = Array.from(seleccionados.values()).map(r => ({
         codigoAreaAdscripcion: r.codigoAreaAdscripcion ?? '',
         areaAdscripcion:       r.areaAdscripcion       ?? '',
         descripcionBien:       r.descripcionBien        ?? '',
@@ -289,9 +276,9 @@ export default function ResguardosPage() {
   }
 
   const columns = modoImpresion === 'etiquetas'
-    ? COLS_ETIQUETAS(selectedIds, toggleSelect)
+    ? COLS_ETIQUETAS(seleccionados, toggleSelect)
     : modoImpresion === 'formatos'
-    ? COLS_FORMATOS(selectedIds, toggleSelect)
+    ? COLS_FORMATOS(seleccionados, toggleSelect)
     : COLS_NORMAL(openEdit)
 
   return (
@@ -340,14 +327,14 @@ export default function ResguardosPage() {
             ) : (
               <motion.div key="btns-impresion" {...FADE} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <AnimatePresence>
-                  {selectedIds.size > 0 && (
+                  {seleccionados.size > 0 && (
                     <motion.div {...FADE}>
                       <Button
                         variant="contained"
                         startIcon={<DownloadIcon />}
                         onClick={handleDescargar}
                       >
-                        Descargar ({selectedIds.size})
+                        Descargar ({seleccionados.size})
                       </Button>
                     </motion.div>
                   )}
@@ -386,8 +373,9 @@ export default function ResguardosPage() {
                 <Autocomplete
                   options={areas}
                   getOptionLabel={(a) => a.descripcion ?? ''}
-                  value={areas.find(a => a.descripcion === filtroArea) ?? null}
-                  onChange={(_, v) => setFiltroArea(v?.descripcion ?? '')}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  value={filtroArea}
+                  onChange={(_, v) => setFiltroArea(v)}
                   renderInput={(params) => <TextField {...params} label="Área" placeholder="Buscar área..." />}
                   noOptionsText="Sin resultados"
                   sx={{ width: 340 }}
@@ -415,9 +403,11 @@ export default function ResguardosPage() {
             <AppTable
               columns={columns}
               rows={resguardos}
-              onRowClick={modoImpresion ? (row) => toggleSelect(row.id) : openDetalle}
-              rowsPerPage={12}
-              resetKey={search + modoImpresion + filtroArea + filtroFecha}
+              onRowClick={modoImpresion ? toggleSelect : openDetalle}
+              page={page}
+              pageCount={totalPages}
+              onPageChange={setPage}
+              totalElements={total}
               isLoading={loading}
             />
           </motion.div>

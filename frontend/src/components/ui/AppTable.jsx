@@ -8,13 +8,40 @@ import 'react-loading-skeleton/dist/skeleton.css'
 
 const SKELETON_ROWS = 8
 
-export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, resetKey, isLoading = false }) {
-  const [page, setPage] = useState(1)
+/**
+ * Soporta dos modos:
+ *
+ * - Controlada (server-side): se le pasan `page`, `pageCount` y `onPageChange`. `rows` es
+ *   ya la página que devolvió el backend y la tabla no recorta nada.
+ * - No controlada: recibe todas las filas y las trocea en cliente. Se mantiene para tablas
+ *   pequeñas que no justifican ir al servidor por cada página.
+ *
+ * `page` es 1-indexado, como espera el componente Pagination de MUI. La conversión al
+ * índice 0 del backend la hace cada página.
+ */
+export default function AppTable({
+  columns,
+  rows,
+  onRowClick,
+  rowsPerPage = 15,
+  resetKey,
+  isLoading = false,
+  page: pageControlada,
+  pageCount: pageCountControlado,
+  onPageChange,
+  totalElements,
+}) {
+  const esControlada = typeof onPageChange === 'function'
+  const [pageInterna, setPageInterna] = useState(1)
 
-  useEffect(() => { setPage(1) }, [resetKey])
+  useEffect(() => { if (!esControlada) setPageInterna(1) }, [resetKey, esControlada])
 
-  const pageCount = Math.ceil(rows.length / rowsPerPage)
-  const visible   = rows.slice((page - 1) * rowsPerPage, page * rowsPerPage)
+  const page      = esControlada ? pageControlada : pageInterna
+  const pageCount = esControlada ? pageCountControlado : Math.ceil(rows.length / rowsPerPage)
+  const visible   = esControlada ? rows : rows.slice((page - 1) * rowsPerPage, page * rowsPerPage)
+
+  const cambiarPagina = esControlada ? onPageChange : setPageInterna
+  const total = esControlada ? totalElements : rows.length
 
   return (
     <>
@@ -115,7 +142,9 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
           right: 0,
           zIndex: 1100,
           display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
+          gap: 2,
           py: 1.5,
           bgcolor: 'background.paper',
           borderTop: '1px solid',
@@ -127,10 +156,15 @@ export default function AppTable({ columns, rows, onRowClick, rowsPerPage = 15, 
         <Pagination
           count={pageCount}
           page={page}
-          onChange={(_, v) => setPage(v)}
+          onChange={(_, v) => cambiarPagina(v)}
           color="primary"
           shape="rounded"
         />
+        {total != null && (
+          <Typography variant="body2" color="text.secondary">
+            {total} {total === 1 ? 'resultado' : 'resultados'}
+          </Typography>
+        )}
       </Box>
     </>
   )

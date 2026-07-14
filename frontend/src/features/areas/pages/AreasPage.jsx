@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Box, Typography, Button, TextField, InputAdornment, Stack, Chip,
 } from '@mui/material'
@@ -8,7 +8,8 @@ import EditIcon   from '@mui/icons-material/Edit'
 import AppTable   from '@/components/ui/AppTable'
 import AreaDetalleModal from '../components/AreaDetalleModal'
 import AreaFormModal    from '../components/AreaFormModal'
-import api from '@/services/api'
+import useDebounce        from '@/hooks/useDebounce'
+import useListadoPaginado from '@/hooks/useListadoPaginado'
 
 const COLUMNS = (onEdit) => [
   { key: 'codigo', label: 'Código', width: 140 },
@@ -52,38 +53,19 @@ const COLUMNS = (onEdit) => [
   },
 ]
 
+const TAM_PAGINA = 12
+
 export default function AreasPage() {
-  const [allAreas, setAllAreas] = useState([])
-  const [areas,    setAreas]    = useState([])
-  const [search,   setSearch]   = useState('')
+  const [search, setSearch] = useState('')
+  const q = useDebounce(search)
 
   const [detalle, setDetalle] = useState({ open: false, area: null })
   const [form,    setForm]    = useState({ open: false, mode: 'crear', area: null })
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    setLoading(true)
-    api.get('/areas/listarTodas')
-      .then(r => { setAllAreas(r.data); setAreas(r.data) })
-      .finally(() => setLoading(false))
-  }, [])
+  const { rows: areas, page, setPage, totalPages, total, loading, recargar } =
+    useListadoPaginado('/areas', { q }, TAM_PAGINA)
 
-  useEffect(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) { setAreas(allAreas); return }
-    setAreas(allAreas.filter(a =>
-      (a.codigo      || '').toLowerCase().includes(q) ||
-      (a.descripcion || '').toLowerCase().includes(q) ||
-      (a.responsable || '').toLowerCase().includes(q)
-    ))
-  }, [search, allAreas])
-
-  const refresh = () =>
-    api.get('/areas/listarTodas').then(r => {
-      setAllAreas(r.data)
-      setAreas(r.data)
-      setSearch('')
-    })
+  const refresh = () => { setSearch(''); return recargar() }
 
   const openEdit    = (row) => setForm({ open: true, mode: 'editar', area: row })
   const openDetalle = (row) => setDetalle({ open: true, area: row })
@@ -127,8 +109,10 @@ export default function AreasPage() {
           columns={COLUMNS(openEdit)}
           rows={areas}
           onRowClick={openDetalle}
-          rowsPerPage={12}
-          resetKey={search}
+          page={page}
+          pageCount={totalPages}
+          onPageChange={setPage}
+          totalElements={total}
           isLoading={loading}
         />
 

@@ -1,6 +1,7 @@
 package mx.gob.sedif.inventarios.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -76,6 +77,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(ApiResponse.error(MessageConstants.ACCESO_DENEGADO));
+    }
+
+    /**
+     * Se lanza cuando el cliente manda un ?sort= que apunta a un campo inexistente.
+     * Es entrada del usuario, no un fallo del servidor: 400, no 500.
+     */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePropertyReference(PropertyReferenceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiResponse.error("Campo de ordenamiento inválido: " + ex.getPropertyName()));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

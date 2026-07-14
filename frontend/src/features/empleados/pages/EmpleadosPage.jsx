@@ -9,6 +9,10 @@ import AppTable      from '@/components/ui/AppTable'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
 import EmpleadoFormModal    from '../components/EmpleadoFormModal'
 import api from '@/services/api'
+import useDebounce        from '@/hooks/useDebounce'
+import useListadoPaginado from '@/hooks/useListadoPaginado'
+
+const TAM_PAGINA = 12
 
 const COLUMNS = (onEdit) => [
   { key: 'noControlEmpleado', label: 'No. Control', width: 130 },
@@ -63,44 +67,22 @@ const COLUMNS = (onEdit) => [
 ]
 
 export default function EmpleadosPage() {
-  const [allEmpleados, setAllEmpleados] = useState([])
-  const [empleados,    setEmpleados]    = useState([])
-  const [areas,        setAreas]        = useState([])
-  const [search,       setSearch]       = useState('')
+  const [areas,  setAreas]  = useState([])
+  const [search, setSearch] = useState('')
+  const q = useDebounce(search)
 
   const [detalle, setDetalle] = useState({ open: false, empleado: null })
   const [form,    setForm]    = useState({ open: false, mode: 'crear', empleado: null })
-  const [loading, setLoading] = useState(true)
 
+  const { rows: empleados, page, setPage, totalPages, total, loading, recargar } =
+    useListadoPaginado('/empleados', { q }, TAM_PAGINA)
+
+  // Catálogo para el select del formulario: se pide una sola vez y no se pagina.
   useEffect(() => {
-    setLoading(true)
-    Promise.all([api.get('/empleados'), api.get('/areas/listarActivas')])
-      .then(([e, a]) => {
-        setAllEmpleados(e.data)
-        setEmpleados(e.data)
-        setAreas(a.data)
-      })
-      .finally(() => setLoading(false))
+    api.get('/areas/listarActivas').then(r => setAreas(r.data)).catch(() => setAreas([]))
   }, [])
 
-  useEffect(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) { setEmpleados(allEmpleados); return }
-    setEmpleados(allEmpleados.filter(emp =>
-      (emp.noControlEmpleado        || '').toLowerCase().includes(q) ||
-      (emp.apellidoPaternoEmpleado  || '').toLowerCase().includes(q) ||
-      (emp.apellidoMaternoEmpleado  || '').toLowerCase().includes(q) ||
-      (emp.nombreEmpleado           || '').toLowerCase().includes(q) ||
-      (emp.areaAdscripcion          || '').toLowerCase().includes(q)
-    ))
-  }, [search, allEmpleados])
-
-  const refresh = () =>
-    api.get('/empleados').then(r => {
-      setAllEmpleados(r.data)
-      setEmpleados(r.data)
-      setSearch('')
-    })
+  const refresh = () => { setSearch(''); return recargar() }
 
   const openEdit    = (row) => setForm({ open: true, mode: 'editar', empleado: row })
   const openDetalle = (row) => setDetalle({ open: true, empleado: row })
@@ -146,8 +128,10 @@ export default function EmpleadosPage() {
           columns={COLUMNS(openEdit)}
           rows={empleados}
           onRowClick={openDetalle}
-          rowsPerPage={12}
-          resetKey={search}
+          page={page}
+          pageCount={totalPages}
+          onPageChange={setPage}
+          totalElements={total}
           isLoading={loading}
         />
 

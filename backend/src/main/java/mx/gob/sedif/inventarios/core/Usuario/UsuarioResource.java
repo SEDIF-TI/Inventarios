@@ -1,7 +1,6 @@
 package mx.gob.sedif.inventarios.core.Usuario;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import mx.gob.sedif.inventarios.util.PagedResponse;
 import mx.gob.sedif.inventarios.util.enums.Rol;
 
 @RestController
@@ -23,9 +23,16 @@ public class UsuarioResource {
 
     private final UsuarioService usuarioService;
 
+    /** Listado paginado. Absorbe el antiguo /filtrar: todos los filtros son opcionales. */
     @GetMapping()
-    public ResponseEntity<List<UsuarioRecord>> listar() {
-        return ResponseEntity.ok(usuarioService.listarUsuarios());
+    public ResponseEntity<PagedResponse<UsuarioRecord>> buscar(
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) String nombreUsuario,
+        @RequestParam(required = false) Rol rol,
+        @RequestParam(required = false) Boolean activo,
+        Pageable pageable
+    ) {
+        return ResponseEntity.ok(usuarioService.buscarUsuarios(q, nombreUsuario, rol, activo, pageable));
     }
 
     @PostMapping("/crear")
@@ -37,14 +44,5 @@ public class UsuarioResource {
     @PutMapping("/actualizar/{id}")
     public ResponseEntity<UsuarioRecord> actualizar(@PathVariable Integer id, @RequestBody UsuarioRequest request) {
         return ResponseEntity.ok(usuarioService.actualizarUsuario(id, request));
-    }
-
-    @GetMapping("/filtrar")
-    public ResponseEntity<List<UsuarioRecord>> filtrar(
-        @RequestParam(required = false) String nombreUsuario,
-        @RequestParam(required = false) Rol rol,
-        @RequestParam(required = false) Boolean activo
-    ) {
-        return ResponseEntity.ok(usuarioService.filtrarUsuarios(nombreUsuario, rol, activo));
     }
 }

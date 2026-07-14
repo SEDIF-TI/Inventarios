@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,8 @@ import mx.gob.sedif.inventarios.core.Empleado.EmpleadoRepository;
 import mx.gob.sedif.inventarios.core.HistorialResguardo.HistorialResguardoService;
 import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.exception.ResourceNotFoundException;
+import mx.gob.sedif.inventarios.util.PagedResponse;
+import mx.gob.sedif.inventarios.util.Paginacion;
 import mx.gob.sedif.inventarios.util.enums.EstatusResguardo;
 import mx.gob.sedif.inventarios.util.enums.Movimiento;
 
@@ -36,11 +39,34 @@ public class ResguardoService {
     private static final Integer ID_SECCION = 166;
     private static final Integer ID_DEPTO_RECURSOS_MATERIALES = 163;
 
+    /**
+     * Tope de ids por petición en /etiquetas y /formato. Los ids viajan en la query string,
+     * y por encima de este orden de magnitud la URL revienta el límite de cabecera de Tomcat
+     * (8 KB) antes de llegar al controller.
+     */
+    private static final int MAX_IDS = 500;
+
+    /**
+     * Punto único de consulta: sustituye a listarResguardos() + filtrarResguardos(), que
+     * eran la misma consulta (una spec sin predicados es un SELECT sin WHERE). Todos los
+     * filtros son opcionales y se combinan con AND.
+     */
     @Transactional(readOnly = true)
-    public List<ResguardoRecord> listarResguardos() {
-        return resguardoRepository.findAllConRelaciones().stream()
-            .map(this::toRecord)
-            .toList();
+    public PagedResponse<ResguardoRecord> buscarResguardos(ResguardoFiltro filtro, Pageable pageable) {
+        Specification<Resguardo> spec = Specification.allOf(
+            ResguardoSpec.porBusqueda(filtro.q()),
+            ResguardoSpec.porIdArea(filtro.idArea()),
+            ResguardoSpec.porFechaAsignacion(filtro.fechaAsignacion()),
+            ResguardoSpec.porEstatus(filtro.estatus()),
+            ResguardoSpec.porArea(filtro.area()),
+            ResguardoSpec.porDescripcion(filtro.descripcion()),
+            ResguardoSpec.porEmpleado(filtro.empleado()),
+            ResguardoSpec.porNoInventario(filtro.noInventario())
+        );
+
+        return PagedResponse.from(
+            resguardoRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+        );
     }
 
     @Transactional
@@ -63,21 +89,8 @@ public class ResguardoService {
     }
 
     @Transactional(readOnly = true)
-    public List<ResguardoRecord> filtrarResguardos(String area, String descripcion, String empleado, String noInventario) {
-        Specification<Resguardo> spec = Specification
-            .where(ResguardoSpec.porArea(area))
-            .and(ResguardoSpec.porDescripcion(descripcion))
-            .and(ResguardoSpec.porEmpleado(empleado))
-            .and(ResguardoSpec.porNoInventario(noInventario));
-        
-        return resguardoRepository.findAll(spec).stream()
-            .map(this::toRecord)
-            .toList();
-    }
-
-    @Transactional(readOnly = true)
     public List<EtiquetaRecord> obtenerEtiquetasPorIds(List<Integer> ids) {
-        return resguardoRepository.findAllByIdConRelaciones(ids).stream()
+        return resguardoRepository.findAllByIdConRelaciones(validarIds(ids)).stream()
             .map(this::toRecord)
             .map(EtiquetaRecord::from)
             .toList();
@@ -85,17 +98,27 @@ public class ResguardoService {
 
     @Transactional(readOnly = true)
     public List<FormatoResguardoRecord> generarFormatosResguardo(List<Integer> ids) {
-        if (ids == null || ids.isEmpty()) {
-            throw new InvalidOperationException("Debe seleccionar al menos un bien");
-        }
+        List<Integer> idsUnicos = validarIds(ids);
 
-        List<ResguardoRecord> seleccionados = resguardoRepository.findAllByIdConRelaciones(ids)
+        List<ResguardoRecord> seleccionados = resguardoRepository.findAllByIdConRelaciones(idsUnicos)
             .stream()
             .map(this::toRecord)
             .toList();
 
-        if (seleccionados.size() != ids.size()) {
+        if (seleccionados.size() != idsUnicos.size()) {
             throw new ResourceNotFoundException("Uno o más resguardos no existen");
+        }
+
+        // El formato de resguardo es un documento que firma un empleado: un bien sin
+        // empleado asignado (DISPONIBLE o BAJA) no puede aparecer en uno.
+        List<String> sinEmpleado = seleccionados.stream()
+            .filter(r -> r.idEmpleado() == null)
+            .map(r -> r.noInventarioBien() != null ? r.noInventarioBien() : "id " + r.id())
+            .toList();
+
+        if (!sinEmpleado.isEmpty()) {
+            throw new InvalidOperationException(
+                "No se puede generar el formato de bienes sin empleado asignado: " + String.join(", ", sinEmpleado));
         }
 
         // áreas fijas: se consultan una sola vez, son iguales para todos los formatos
@@ -201,6 +224,30 @@ public class ResguardoService {
     }
 
     //METODOS PRIVADOS
+
+    private List<Integer> validarIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new InvalidOperationException("Debe seleccionar al menos un bien");
+        }
+
+        List<Integer> idsUnicos = ids.stream()
+            .filter(java.util.Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (idsUnicos.isEmpty()) {
+            throw new InvalidOperationException("Debe seleccionar al menos un bien");
+        }
+
+        if (idsUnicos.size() > MAX_IDS) {
+            throw new InvalidOperationException(
+                "No se pueden procesar más de %d bienes por petición (recibidos %d)"
+                    .formatted(MAX_IDS, idsUnicos.size()));
+        }
+
+        return idsUnicos;
+    }
+
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
         if (request.idAreaAdscripcion() == null) {
             throw new InvalidOperationException("El área de adscripción es obligatoria");
