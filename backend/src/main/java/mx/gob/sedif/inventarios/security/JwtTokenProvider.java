@@ -27,6 +27,14 @@ public class JwtTokenProvider {
         @Value("${app.jwt.expiration-ms}") long accessValidityMs,
         @Value("${app.jwt.refresh-expiration-ms}") long refreshValidityMs
     ) {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalArgumentException("JWT_SECRET no puede estar vacío");
+        }
+        if (secretKey.getBytes().length < 32) {
+            throw new IllegalArgumentException(
+                "JWT_SECRET debe tener al menos 32 bytes (256 bits). Longitud actual: "
+                + secretKey.getBytes().length + " bytes");
+        }
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
         this.accessValidityMs = accessValidityMs;
         this.refreshValidityMs = refreshValidityMs;

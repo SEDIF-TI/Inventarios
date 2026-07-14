@@ -6,24 +6,19 @@ import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Predicate;
+import mx.gob.sedif.inventarios.util.SpecUtil;
 import mx.gob.sedif.inventarios.util.enums.Rol;
 
 public class UsuarioSpec {
 
-    /**
-     * Búsqueda rápida sobre nombre de usuario y rol.
-     *
-     * El rol se resuelve en Java (qué constantes del enum contienen el término) en lugar
-     * de castear la columna a texto en SQL: el conjunto de roles es diminuto y conocido, y
-     * así el predicado queda como un IN sobre valores tipados, sin depender de cómo cada
-     * dialecto convierta un enum a varchar.
-     */
     public static Specification<Usuario> porBusqueda(String q) {
         return (root, query, cb) -> {
             if (q == null || q.isBlank()) return null;
 
             String termino = q.toUpperCase();
-            Predicate porNombre = cb.like(cb.upper(root.get("nombreUsuario")), "%" + termino + "%");
+            Predicate porNombre = cb.like(
+                cb.upper(root.get("nombreUsuario")),
+                "%" + SpecUtil.escapeLike(termino) + "%", '\\');
 
             List<Rol> rolesCoincidentes = Arrays.stream(Rol.values())
                 .filter(rol -> rol.name().contains(termino))
@@ -36,8 +31,11 @@ public class UsuarioSpec {
     }
 
     public static Specification<Usuario> porNombreUsuario(String nombreUsuario) {
-        return (root, query, cb) -> nombreUsuario == null || nombreUsuario.isBlank() ? null
-            : cb.like(cb.upper(root.get("nombreUsuario")), "%" + nombreUsuario.toUpperCase() + "%");
+        return (root, query, cb) -> {
+            if (nombreUsuario == null || nombreUsuario.isBlank()) return null;
+            String patron = "%" + SpecUtil.escapeLike(nombreUsuario.toUpperCase()) + "%";
+            return cb.like(cb.upper(root.get("nombreUsuario")), patron, '\\');
+        };
     }
 
     public static Specification<Usuario> porRol(Rol rol) {

@@ -34,5 +34,5 @@ public class Usuario {
     private Rol rol;
 
     @Column(name = "b_activo")
-    private Boolean activo;
+    private Boolean activo = true;
 }

@@ -75,7 +75,7 @@ public class ResguardoService {
         mapearCampos(resguardo, request);
         Resguardo guardado = resguardoRepository.save(resguardo);
 
-        historialService.registrarHistorial(resguardo, Movimiento.ALTA, "Alta de bien");
+        historialService.registrarHistorial(resguardo, Movimiento.ALTA, MessageConstants.ALTA_BIEN_HISTORIAL);
 
         return toRecord(guardado);
     }
@@ -106,7 +106,7 @@ public class ResguardoService {
             .toList();
 
         if (seleccionados.size() != idsUnicos.size()) {
-            throw new ResourceNotFoundException("Uno o más resguardos no existen");
+            throw new ResourceNotFoundException(MessageConstants.RESGUARDOS_NO_EXISTEN);
         }
 
         // El formato de resguardo es un documento que firma un empleado: un bien sin
@@ -118,7 +118,7 @@ public class ResguardoService {
 
         if (!sinEmpleado.isEmpty()) {
             throw new InvalidOperationException(
-                "No se puede generar el formato de bienes sin empleado asignado: " + String.join(", ", sinEmpleado));
+                MessageConstants.FORMATO_SIN_EMPLEADO.formatted(String.join(", ", sinEmpleado)));
         }
 
         // áreas fijas: se consultan una sola vez, son iguales para todos los formatos
@@ -141,7 +141,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
         
         if (resguardo.getEstatusResguardo() == EstatusResguardo.BAJA) {
-            throw new InvalidOperationException("El bien ya se encuentra dado de baja");
+            throw new InvalidOperationException(MessageConstants.BIEN_YA_DADO_BAJA);
         }
 
         resguardo.setEstatusResguardo(EstatusResguardo.BAJA);
@@ -159,7 +159,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
 
         if (resguardo.getEstatusResguardo() == EstatusResguardo.BAJA) {
-            throw new InvalidOperationException("No se puede liberar un bien dado de baja");
+            throw new InvalidOperationException(MessageConstants.NO_LIBERAR_BIEN_BAJA);
         }
 
         AreaAdscripcion areaDisponible = areaRepository.findById(ID_SECCION)
@@ -181,7 +181,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
 
         if (resguardo.getEstatusResguardo() != EstatusResguardo.ACTIVO) {
-            throw new InvalidOperationException("Solo se puede reasignar un bien que esté activo");
+            throw new InvalidOperationException(MessageConstants.REASIGNAR_SOLO_ACTIVO);
         }
 
         Empleado nuevoEmpleado = empleadoRepository.findById(idNuevoEmpleado)
@@ -203,7 +203,7 @@ public class ResguardoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
 
         if (resguardo.getEstatusResguardo() != EstatusResguardo.DISPONIBLE) {
-            throw new InvalidOperationException("Solo se puede asignar un bien que esté disponible");
+            throw new InvalidOperationException(MessageConstants.ASIGNAR_SOLO_DISPONIBLE);
         }
 
         Empleado empleado = empleadoRepository.findById(idEmpleado)
@@ -227,7 +227,7 @@ public class ResguardoService {
 
     private List<Integer> validarIds(List<Integer> ids) {
         if (ids == null || ids.isEmpty()) {
-            throw new InvalidOperationException("Debe seleccionar al menos un bien");
+            throw new InvalidOperationException(MessageConstants.SELECCIONAR_AL_MENOS_UN_BIEN);
         }
 
         List<Integer> idsUnicos = ids.stream()
@@ -236,13 +236,12 @@ public class ResguardoService {
             .toList();
 
         if (idsUnicos.isEmpty()) {
-            throw new InvalidOperationException("Debe seleccionar al menos un bien");
+            throw new InvalidOperationException(MessageConstants.SELECCIONAR_AL_MENOS_UN_BIEN);
         }
 
         if (idsUnicos.size() > MAX_IDS) {
             throw new InvalidOperationException(
-                "No se pueden procesar más de %d bienes por petición (recibidos %d)"
-                    .formatted(MAX_IDS, idsUnicos.size()));
+                MessageConstants.MAX_IDS_EXCEDIDO.formatted(MAX_IDS, idsUnicos.size()));
         }
 
         return idsUnicos;
@@ -250,7 +249,7 @@ public class ResguardoService {
 
     private void mapearCampos(Resguardo resguardo, ResguardoRequest request) {
         if (request.idAreaAdscripcion() == null) {
-            throw new InvalidOperationException("El área de adscripción es obligatoria");
+            throw new InvalidOperationException(MessageConstants.AREA_OBLIGATORIA);
         }
         AreaAdscripcion area = areaRepository.findById(request.idAreaAdscripcion())
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(request.idAreaAdscripcion())));

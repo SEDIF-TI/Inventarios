@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import mx.gob.sedif.inventarios.exception.ApiResponse;
+import mx.gob.sedif.inventarios.exception.MessageConstants;
 import mx.gob.sedif.inventarios.security.JwtAuthFilter;
 import mx.gob.sedif.inventarios.security.RateLimitingFilter;
 
@@ -68,6 +69,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/api/usuarios/**").hasAnyRole("SUPERADMIN", "ADMIN")
                 .requestMatchers("/api/resguardos/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
                 .requestMatchers("/api/historial/**").hasAnyRole("SUPERADMIN", "ADMIN", "ANALISTA")
@@ -82,14 +84,14 @@ public class SecurityConfig {
                     response.setStatus(401);
                     response.setContentType("application/json");
                     response.getWriter().write(
-                        objectMapper.writeValueAsString(ApiResponse.error("No autenticado"))
+                        objectMapper.writeValueAsString(ApiResponse.error(MessageConstants.NO_AUTENTICADO))
                     );
                 })
                 .accessDeniedHandler((HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) -> {
                     response.setStatus(403);
                     response.setContentType("application/json");
                     response.getWriter().write(
-                        objectMapper.writeValueAsString(ApiResponse.error("Acceso denegado"))
+                        objectMapper.writeValueAsString(ApiResponse.error(MessageConstants.ACCESO_DENEGADO))
                     );
                 })
             )

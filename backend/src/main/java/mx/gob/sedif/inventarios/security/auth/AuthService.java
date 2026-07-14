@@ -85,6 +85,8 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(username);
         addRefreshCookie(response, newRefreshToken);
 
+        refreshTokenBlacklist.revoke(refreshToken);
+
         Usuario usuario = usuarioRepository.findByNombreUsuario(username)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.USUARIO_NO_ENCONTRADO));
 
@@ -96,6 +98,7 @@ public class AuthService {
         return new JwtResponse(newAccessToken, userInfo);
     }
 
+    @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = extractRefreshCookie(request);
         if (refreshToken != null) {

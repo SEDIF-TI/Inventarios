@@ -42,7 +42,7 @@ public class UsuarioService {
     @Transactional
     public UsuarioRecord crearUsuario(UsuarioRequest request) {
         if (request.password() == null || request.password().isBlank()) {
-            throw new InvalidOperationException("La contraseña es obligatoria");
+            throw new InvalidOperationException(MessageConstants.CONTRASENA_OBLIGATORIA);
         }
         if (usuarioRepository.findByNombreUsuario(request.nombreUsuario()).isPresent()) {
             throw new DuplicateResourceException(
@@ -87,11 +87,11 @@ public class UsuarioService {
     //METODOS PRIVADOS-----
 
     private void validarAsignacionRol(Rol rolSolicitado) {
-        String nombreActual = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario actual = usuarioRepository.findByNombreUsuario(nombreActual)
-            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.USUARIO_NO_ENCONTRADO));
+        boolean esSuperAdmin = SecurityContextHolder.getContext().getAuthentication()
+            .getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_" + Rol.SUPERADMIN.name()));
 
-        if (actual.getRol() == Rol.ADMIN && rolSolicitado == Rol.SUPERADMIN) {
+        if (!esSuperAdmin && rolSolicitado == Rol.SUPERADMIN) {
             throw new InvalidOperationException(
                 MessageConstants.ROL_NO_PERMITIDO.formatted(rolSolicitado));
         }

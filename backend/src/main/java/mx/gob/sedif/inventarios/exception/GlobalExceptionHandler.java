@@ -51,13 +51,13 @@ public class GlobalExceptionHandler {
             .reduce((a, b) -> a + "; " + b)
             .orElse("Error de validación");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error(errores));
+            .body(ApiResponse.error(MessageConstants.ERROR_VALIDACION.formatted(errores)));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error("Error de validación: " + ex.getMessage()));
+            .body(ApiResponse.error(MessageConstants.ERROR_VALIDACION.formatted(ex.getMessage())));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PropertyReferenceException.class)
     public ResponseEntity<ApiResponse<Void>> handlePropertyReference(PropertyReferenceException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error("Campo de ordenamiento inválido: " + ex.getPropertyName()));
+            .body(ApiResponse.error(MessageConstants.CAMPO_ORDEN_INVALIDO.formatted(ex.getPropertyName())));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -117,13 +117,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException ex) {
         log.error("Error no esperado", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("Error interno del servidor"));
+            .body(ApiResponse.error(MessageConstants.ERROR_INTERNO));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
         log.error("Error crítico no esperado", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("Error interno del servidor"));
+            .body(ApiResponse.error(MessageConstants.ERROR_INTERNO));
     }
 }
