@@ -54,6 +54,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(withDefaults())
+            // CSRF se deshabilita porque la API es stateless (sin sesiones HTTP).
+            // La autenticación se gestiona mediante JWT en headers Authorization,
+            // no cookies de sesión. Las cookies refresh usan SameSite=Strict
+            // como protección adicional contra CSRF.
             .csrf(csrf -> csrf.disable())
             .headers(headers -> headers
                 .frameOptions(frame -> frame.deny())

@@ -33,6 +33,7 @@ public class ResguardoService {
     private final AreaAdscripcionRepository areaRepository;
     private final EmpleadoRepository empleadoRepository;
     private final HistorialResguardoService historialService;
+    private final ResguardoMapper resguardoMapper;
 
     private static final Integer ID_UNIDAD = 151;
     private static final Integer ID_DIRECCION = 152;
@@ -65,7 +66,7 @@ public class ResguardoService {
         );
 
         return PagedResponse.from(
-            resguardoRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+            resguardoRepository.findAll(spec, Paginacion.conOrden(pageable)).map(resguardoMapper::toRecord)
         );
     }
 
@@ -73,11 +74,11 @@ public class ResguardoService {
     public ResguardoRecord crearResguardo(ResguardoRequest request) {
         Resguardo resguardo = new Resguardo();
         mapearCampos(resguardo, request);
-        Resguardo guardado = resguardoRepository.save(resguardo);
+        resguardoRepository.save(resguardo);
 
         historialService.registrarHistorial(resguardo, Movimiento.ALTA, MessageConstants.ALTA_BIEN_HISTORIAL);
 
-        return toRecord(guardado);
+        return resguardoMapper.toRecord(resguardo);
     }
 
     @Transactional
@@ -85,13 +86,13 @@ public class ResguardoService {
         Resguardo resguardo = resguardoRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
         mapearCampos(resguardo, request);
-        return toRecord(resguardoRepository.save(resguardo));
+        return resguardoMapper.toRecord(resguardoRepository.save(resguardo));
     }
 
     @Transactional(readOnly = true)
     public List<EtiquetaRecord> obtenerEtiquetasPorIds(List<Integer> ids) {
         return resguardoRepository.findAllByIdConRelaciones(validarIds(ids)).stream()
-            .map(this::toRecord)
+            .map(resguardoMapper::toRecord)
             .map(EtiquetaRecord::from)
             .toList();
     }
@@ -102,7 +103,7 @@ public class ResguardoService {
 
         List<ResguardoRecord> seleccionados = resguardoRepository.findAllByIdConRelaciones(idsUnicos)
             .stream()
-            .map(this::toRecord)
+            .map(resguardoMapper::toRecord)
             .toList();
 
         if (seleccionados.size() != idsUnicos.size()) {
@@ -121,11 +122,15 @@ public class ResguardoService {
                 MessageConstants.FORMATO_SIN_EMPLEADO.formatted(String.join(", ", sinEmpleado)));
         }
 
-        // áreas fijas: se consultan una sola vez, son iguales para todos los formatos
-        String unidad = obtenerNombreArea(ID_UNIDAD);
-        String direccion = obtenerNombreArea(ID_DIRECCION);
-        AreaFirmaRecord seccion = obtenerAreaFirma(ID_SECCION);
-        AreaFirmaRecord departamentoRecursosMateriales = obtenerAreaFirma(ID_DEPTO_RECURSOS_MATERIALES);
+        // áreas fijas: una sola query batch, son iguales para todos los formatos
+        Map<Integer, AreaAdscripcion> areasFijas = areaRepository.findAllById(
+            List.of(ID_UNIDAD, ID_DIRECCION, ID_SECCION, ID_DEPTO_RECURSOS_MATERIALES))
+            .stream().collect(Collectors.toMap(AreaAdscripcion::getId, a -> a));
+
+        String unidad = obtenerAreaObligatoria(areasFijas, ID_UNIDAD).getDescripcionAreaAdscripcion();
+        String direccion = obtenerAreaObligatoria(areasFijas, ID_DIRECCION).getDescripcionAreaAdscripcion();
+        AreaFirmaRecord seccion = toAreaFirma(obtenerAreaObligatoria(areasFijas, ID_SECCION));
+        AreaFirmaRecord departamentoRecursosMateriales = toAreaFirma(obtenerAreaObligatoria(areasFijas, ID_DEPTO_RECURSOS_MATERIALES));
 
         Map<Integer, List<ResguardoRecord>> porEmpleado = seleccionados.stream()
             .collect(Collectors.groupingBy(ResguardoRecord::idEmpleado));
@@ -150,7 +155,7 @@ public class ResguardoService {
 
         historialService.registrarHistorial(resguardo, Movimiento.BAJA, motivo);
 
-        return toRecord(guardado);
+        return resguardoMapper.toRecord(guardado);
     }
 
     @Transactional
@@ -172,7 +177,7 @@ public class ResguardoService {
 
         historialService.registrarHistorial(resguardo, Movimiento.DISPONIBLE, motivo);
 
-        return toRecord(guardado);
+        return resguardoMapper.toRecord(guardado);
     }
 
     @Transactional
@@ -194,7 +199,7 @@ public class ResguardoService {
 
         historialService.registrarHistorial(resguardo, Movimiento.REASIGNACION, motivo);
 
-        return toRecord(guardado);
+        return resguardoMapper.toRecord(guardado);
     }
 
     @Transactional
@@ -220,7 +225,7 @@ public class ResguardoService {
 
         historialService.registrarHistorial(resguardo, Movimiento.ASIGNACION, motivo);
 
-        return toRecord(guardado);
+        return resguardoMapper.toRecord(guardado);
     }
 
     //METODOS PRIVADOS
@@ -286,40 +291,6 @@ public class ResguardoService {
         resguardo.setActivo(request.activo() != null ? request.activo() : true);
     }
 
-    private ResguardoRecord toRecord(Resguardo r) {
-        return new ResguardoRecord(
-            r.getId(),
-            r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getId() : null,
-            r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getCodigoAreaAdscripcion() : null,
-            r.getAreaAdscripcion() != null ? r.getAreaAdscripcion().getDescripcionAreaAdscripcion() : null,
-            r.getEmpleado() != null ? r.getEmpleado().getId() : null,
-            r.getEmpleado() != null ? r.getEmpleado().getApellidoPaternoEmpleado() + " " +
-                r.getEmpleado().getApellidoMaternoEmpleado() + " " +
-                r.getEmpleado().getNombreEmpleado() : null,
-            r.getEmpleado() != null ? r.getEmpleado().getNoControlEmpleado() : null,
-            r.getCogBien(),
-            r.getNoInventarioBien(),
-            r.getNoInternoBien(),
-            r.getDescripcionBien(),
-            r.getEstadoBien(),
-            r.getMarcaBien(),
-            r.getModeloBien(),
-            r.getNoSerieBien(),
-            r.getMaterialBien(),
-            r.getColorBien(),
-            r.getFacturaBien(),
-            r.getEntradaBien(),
-            r.getPedidoBien(),
-            r.getProveedorBien(),
-            r.getCostoBien(),
-            r.getFechaAsignacionBien(),
-            r.getObservacion(),
-            r.getObservacion2(),
-            r.getEstatusResguardo(),
-            r.getActivo()
-        );
-    }
-
     private FormatoResguardoRecord armarFormato(List<ResguardoRecord> bienesEmpleado,
         String unidad, String direccion, AreaFirmaRecord seccion,
         AreaFirmaRecord departamentoRecursosMateriales) {
@@ -350,15 +321,15 @@ public class ResguardoService {
         );
     }
 
-    private String obtenerNombreArea(Integer id) {
-        return areaRepository.findById(id)
-            .map(AreaAdscripcion::getDescripcionAreaAdscripcion)
-            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
+    private AreaAdscripcion obtenerAreaObligatoria(Map<Integer, AreaAdscripcion> areas, Integer id) {
+        AreaAdscripcion area = areas.get(id);
+        if (area == null) {
+            throw new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id));
+        }
+        return area;
     }
 
-    private AreaFirmaRecord obtenerAreaFirma(Integer id) {
-        AreaAdscripcion area = areaRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
+    private AreaFirmaRecord toAreaFirma(AreaAdscripcion area) {
         return new AreaFirmaRecord(area.getDescripcionAreaAdscripcion(), area.getResponsable());
     }
 }

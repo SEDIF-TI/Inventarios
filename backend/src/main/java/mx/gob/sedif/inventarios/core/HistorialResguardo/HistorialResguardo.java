@@ -41,7 +41,7 @@ public class HistorialResguardo {
     private AreaAdscripcion areaAdscripcion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fk_n_id_empleado", nullable = false)
+    @JoinColumn(name = "fk_n_id_empleado")
     private Empleado empleado;
 
     @Column(name = "d_fecha_movimiento", nullable = false)

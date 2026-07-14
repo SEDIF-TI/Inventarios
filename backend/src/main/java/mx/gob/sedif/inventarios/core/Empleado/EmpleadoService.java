@@ -2,6 +2,8 @@ package mx.gob.sedif.inventarios.core.Empleado;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,7 @@ public class EmpleadoService {
     }
 
     @Transactional
+    @CacheEvict(value = "empleadosActivos", allEntries = true)
     public EmpleadoRecord crearEmpleado(EmpleadoRequest request) {
         Empleado empleado = new Empleado();
         mapearCampos(empleado, request);
@@ -50,6 +53,7 @@ public class EmpleadoService {
     }
 
     @Transactional
+    @CacheEvict(value = "empleadosActivos", allEntries = true)
     public EmpleadoRecord actualizarEmpleado(Integer id, EmpleadoRequest request){
         Empleado empleado = empleadoRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(id)));
@@ -59,6 +63,7 @@ public class EmpleadoService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable("empleadosActivos")
     public List<EmpleadoRecord> listarEmpleadosActivos() {
         return empleadoRepository.findAllActivos().stream()
             .map(this::toRecord)

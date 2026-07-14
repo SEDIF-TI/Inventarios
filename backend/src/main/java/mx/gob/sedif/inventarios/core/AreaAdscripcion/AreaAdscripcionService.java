@@ -2,6 +2,8 @@ package mx.gob.sedif.inventarios.core.AreaAdscripcion;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class AreaAdscripcionService {
     private final AreaAdscripcionRepository areaAdscripcionRepository;
 
     @Transactional(readOnly = true)
+    @Cacheable("areasActivas")
     public List<AreaAdscripcionRecord> listarAreasActivas() {
         return areaAdscripcionRepository.findAllActivas().stream()
             .map(this::toRecord)
@@ -43,6 +46,7 @@ public class AreaAdscripcionService {
     }
 
     @Transactional
+    @CacheEvict(value = "areasActivas", allEntries = true)
     public AreaAdscripcionRecord crearArea(AreaAdscripcionRequest request) {
         AreaAdscripcion area = new AreaAdscripcion();
         mapearCampos(area, request);
@@ -50,6 +54,7 @@ public class AreaAdscripcionService {
     }
 
     @Transactional
+    @CacheEvict(value = "areasActivas", allEntries = true)
     public AreaAdscripcionRecord actualizarArea(Integer id, AreaAdscripcionRequest request) {
         AreaAdscripcion area = areaAdscripcionRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));

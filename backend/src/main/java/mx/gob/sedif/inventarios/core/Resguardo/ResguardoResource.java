@@ -16,11 +16,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import mx.gob.sedif.inventarios.util.PagedResponse;
 
 
+/**
+ * API REST de resguardos (bienes muebles).
+ *
+ * <p>No existe {@code DELETE}: la baja es siempre lógica ({@code PUT /{id}/baja}),
+ * que marca el bien como {@code EstatusResguardo.BAJA} y registra el movimiento
+ * en el historial. Esta decisión es intencional: los bienes dados de baja deben
+ * conservarse para auditoría y para el historial de resguardos.
+ */
 @RestController
 @RequestMapping("/api/resguardos")
 @RequiredArgsConstructor
@@ -44,18 +51,18 @@ public class ResguardoResource {
         return ResponseEntity.ok(resguardoService.actualizarResguardo(id, request));
     }
 
-    @GetMapping("/etiquetas")
+    @PostMapping("/etiquetas")
     public ResponseEntity<List<EtiquetaRecord>> obtenerEtiquetas(
-        @RequestParam List<Integer> ids
+        @Valid @RequestBody IdsRequest request
     ) {
-        return ResponseEntity.ok(resguardoService.obtenerEtiquetasPorIds(ids));
+        return ResponseEntity.ok(resguardoService.obtenerEtiquetasPorIds(request.ids()));
     }
 
-    @GetMapping("/formato")
+    @PostMapping("/formato")
     public ResponseEntity<List<FormatoResguardoRecord>> obtenerFormato(
-        @RequestParam List<Integer> ids
+        @Valid @RequestBody IdsRequest request
     ) {
-        return ResponseEntity.ok(resguardoService.generarFormatosResguardo(ids));
+        return ResponseEntity.ok(resguardoService.generarFormatosResguardo(request.ids()));
     }
 
     @PutMapping("/{id}/asignar")

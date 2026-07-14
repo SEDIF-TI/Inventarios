@@ -50,6 +50,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper;
 
+    private String getClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
     private Bucket newBucket() {
         Bandwidth limit = Bandwidth.builder()
             .capacity(capacity)
@@ -70,7 +78,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         @NonNull HttpServletResponse response,
         @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-            String key = request.getRemoteAddr();
+            String key = getClientIp(request);
             Bucket bucket = buckets.get(key, k -> newBucket());
 
             if (bucket.tryConsume(1)) {

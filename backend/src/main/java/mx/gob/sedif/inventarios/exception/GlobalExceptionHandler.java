@@ -56,8 +56,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+        log.warn("Violación de restricción: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error(MessageConstants.ERROR_VALIDACION.formatted(ex.getMessage())));
+            .body(ApiResponse.error(MessageConstants.ERROR_VALIDACION.formatted("uno o más campos inválidos")));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -109,8 +110,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ApiResponse<Void>> handleSecurity(SecurityException ex) {
+        log.warn("Error de seguridad: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(ApiResponse.error(ex.getMessage()));
+            .body(ApiResponse.error(MessageConstants.CREDENCIALES_INVALIDAS));
     }
 
     @ExceptionHandler(RuntimeException.class)

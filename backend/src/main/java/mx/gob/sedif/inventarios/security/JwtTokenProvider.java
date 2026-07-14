@@ -1,6 +1,8 @@
 package mx.gob.sedif.inventarios.security;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
@@ -30,12 +32,12 @@ public class JwtTokenProvider {
         if (secretKey == null || secretKey.isBlank()) {
             throw new IllegalArgumentException("JWT_SECRET no puede estar vacío");
         }
-        if (secretKey.getBytes().length < 32) {
+        if (secretKey.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalArgumentException(
                 "JWT_SECRET debe tener al menos 32 bytes (256 bits). Longitud actual: "
-                + secretKey.getBytes().length + " bytes");
+                + secretKey.getBytes(StandardCharsets.UTF_8).length + " bytes");
         }
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         this.accessValidityMs = accessValidityMs;
         this.refreshValidityMs = refreshValidityMs;
     }
@@ -49,6 +51,7 @@ public class JwtTokenProvider {
             .collect(Collectors.joining(","));
 
         return Jwts.builder()
+            .id(UUID.randomUUID().toString())
             .subject(username)
             .issuedAt(now)
             .claim("roles", roles)
@@ -79,10 +82,20 @@ public class JwtTokenProvider {
     public String createRefreshToken(String username) {
         Date now = new Date();
         return Jwts.builder()
+            .id(UUID.randomUUID().toString())
             .subject(username)
             .issuedAt(now)
             .expiration(new Date(now.getTime() + refreshValidityMs))
             .signWith(key)
             .compact();
+    }
+
+    public String getIdFromToken(String token) {
+        return Jwts.parser()
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getId();
     }
 }

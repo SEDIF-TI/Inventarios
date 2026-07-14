@@ -41,5 +41,5 @@ public class Empleado {
     private String apellidoMaternoEmpleado;
 
     @Column(name = "b_empleado_activo", nullable = false)
-    private Boolean empleadoActivo;
+    private Boolean empleadoActivo = true;
 }
