@@ -2,6 +2,7 @@ import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/
 import oswaldLight   from '@/assets/fonts/Oswald-Light.ttf'
 import oswaldRegular from '@/assets/fonts/Oswald-Regular.ttf'
 import oswaldBold    from '@/assets/fonts/Oswald-Bold.ttf'
+import { W, H, GAP, PAD_TOP, PAD_BOTTOM, PAD_LEFT, PAD_RIGHT, COLS } from './etiquetaLayout'
 
 Font.register({
   family: 'Oswald',
@@ -13,19 +14,20 @@ Font.register({
 })
 
 const FONT   = 'Oswald'
-const W      = 189
-const H      = 72
-const GAP    = 9
 const LOGO_W = 45
 
 const isNA = (v) => !v || v.trim().toUpperCase() === 'N/A'
 
+/* Los números de serie largos desbordarían la etiqueta por la derecha, así que se recortan. */
+const MAX_SERIE = 10
+const truncarSerie = (v) => (v.length > MAX_SERIE ? v.slice(0, MAX_SERIE) + '…' : v)
+
 const s = StyleSheet.create({
   page: {
-    paddingTop: 36,
-    paddingBottom: 36,
-    paddingLeft: 13.5,
-    paddingRight: 13.5,
+    paddingTop: PAD_TOP,
+    paddingBottom: PAD_BOTTOM,
+    paddingLeft: PAD_LEFT,
+    paddingRight: PAD_RIGHT,
     fontFamily: FONT,
     fontWeight: 300,
   },
@@ -78,10 +80,14 @@ const s = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 1,
   },
+  /* Desplazada a la izquierda respecto de su posición natural para dejar aire a la derecha:
+     es donde termina el no. de serie y donde antes se salía del borde de la etiqueta. */
   marcaText: {
     fontSize: 7,
     fontWeight: 300,
     textAlign: 'center',
+    position: 'relative',
+    right: 10,
   },
 
   /* ── sección inferior: ancho completo del label ── */
@@ -121,6 +127,12 @@ function Etiqueta({ data, logoPuebla, logoFamilias }) {
     .filter(v => !isNA(v))
     .join('  ')
 
+  const serie = isNA(data.noSerieBien) ? '' : truncarSerie(data.noSerieBien.trim())
+
+  // Queda "DELL OPTIPLEX 7010 / A1B2C3D4E5…". El filter evita dejar un "/" suelto cuando
+  // falta la marca/modelo o el no. de serie.
+  const equipo = [marcaMod, serie].filter(Boolean).join(' / ')
+
   const empleado = (data.empleado || '').replace(/\s*\/+\s*$/, '').trim()
 
   return (
@@ -138,7 +150,7 @@ function Etiqueta({ data, logoPuebla, logoFamilias }) {
         <View style={s.infoCol}>
           <Text style={s.areaText}>{data.codigoAreaAdscripcion} {data.areaAdscripcion}</Text>
           <Text style={s.descripcionText}>{data.descripcionBien}</Text>
-          {marcaMod ? <Text style={s.marcaText}>{marcaMod}</Text> : null}
+          {equipo ? <Text style={s.marcaText}>{equipo}</Text> : null}
         </View>
 
       </View>
@@ -161,8 +173,8 @@ function Etiqueta({ data, logoPuebla, logoFamilias }) {
 
 export default function EtiquetasPDF({ etiquetas, logoPuebla, logoFamilias }) {
   const rows = []
-  for (let i = 0; i < etiquetas.length; i += 3) {
-    rows.push(etiquetas.slice(i, i + 3))
+  for (let i = 0; i < etiquetas.length; i += COLS) {
+    rows.push(etiquetas.slice(i, i + COLS))
   }
 
   return (

@@ -10,6 +10,7 @@ import EditIcon        from '@mui/icons-material/Edit'
 import PrintIcon       from '@mui/icons-material/Print'
 import DownloadIcon    from '@mui/icons-material/Download'
 import CloseIcon       from '@mui/icons-material/Close'
+import GridOnIcon      from '@mui/icons-material/GridOn'
 import AppTable      from '@/components/ui/AppTable'
 import AppDatePicker from '@/components/ui/AppDatePicker'
 import pngGobUrl      from '@/assets/logos/png-gob.png'
@@ -197,12 +198,39 @@ export default function ResguardosPage() {
     setTimeout(() => URL.revokeObjectURL(url), 30000)
   }
 
+  // Hoja de calibración: solo el contorno de las 30 etiquetas de la J5260, sin contenido.
+  // Se imprime en papel normal y se contrasta a contraluz contra una hoja real para
+  // comprobar que la impresora no está escalando antes de gastar etiquetas.
+  const handleDescargarPrueba = () => {
+    const promise = import('../components/HojaPruebaPDF')
+      .then(async ({ default: HojaPruebaPDF }) => {
+        const [{ pdf }, { createElement }] = await Promise.all([
+          import('@react-pdf/renderer'),
+          import('react'),
+        ])
+        const blob = await pdf(createElement(HojaPruebaPDF)).toBlob()
+        abrirPDF(blob)
+      })
+      .catch(err => {
+        console.error('[Hoja prueba] Error generando PDF:', err)
+        throw err
+      })
+
+    sileo.promise(promise, {
+      loading: { title: 'Generando hoja de prueba...' },
+      success: { title: 'Hoja de prueba lista', description: 'Imprímela al 100%, sin ajustar a página' },
+      error:   { title: 'Error', description: 'No se pudo generar la hoja de prueba' },
+    })
+  }
+
   const handleDescargar = async () => {
     if (modoImpresion === 'formatos') {
       const ids = Array.from(seleccionados.keys())
 
+      // Los ids van en el cuerpo, no en la query string: en la URL una selección grande
+      // superaba el límite de cabecera de Tomcat y la petición ni llegaba al controller.
       const promise = Promise.all([
-        api.get('/resguardos/formato', { params: { ids } }),
+        api.post('/resguardos/formato', { ids }),
         toBase64(pngGobUrl),
         toBase64(familiasDifUrl),
         import('@react-pdf/renderer'),
@@ -240,6 +268,7 @@ export default function ResguardosPage() {
         descripcionBien:       r.descripcionBien        ?? '',
         marcaBien:             r.marcaBien              ?? '',
         modeloBien:            r.modeloBien             ?? '',
+        noSerieBien:           r.noSerieBien            ?? '',
         empleado:              r.empleado               ?? '',
         noInventarioBien:      r.noInventarioBien       ?? '',
         mesAnioAsignacion:     r.fechaAsignacionBien
@@ -339,6 +368,18 @@ export default function ResguardosPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* No depende de la selección: es una hoja de calibración, no lleva datos. */}
+                {modoImpresion === 'etiquetas' && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<GridOnIcon />}
+                    onClick={handleDescargarPrueba}
+                  >
+                    Descargar prueba
+                  </Button>
+                )}
+
                 <Button variant="outlined" startIcon={<CloseIcon />} onClick={salirModo}>
                   Salir
                 </Button>
