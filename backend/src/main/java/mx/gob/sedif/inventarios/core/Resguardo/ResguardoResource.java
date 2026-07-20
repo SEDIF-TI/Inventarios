@@ -89,6 +89,14 @@ public class ResguardoResource {
         return ResponseEntity.ok(resguardoService.marcarDisponible(id, request.motivo()));
     }
 
+    @PutMapping("/reasignar-lote")
+    public ResponseEntity<ReasignarLoteResponse> reasignarLote(
+        @Valid @RequestBody ReasignarLoteRequest request
+    ) {
+        return ResponseEntity.ok(
+            resguardoService.reasignarLote(request.ids(), request.idNuevoEmpleado(), request.motivo()));
+    }
+
     @PutMapping("/{id}/reasignar")
     public ResponseEntity<ResguardoRecord> reasignar(
         @PathVariable Integer id,

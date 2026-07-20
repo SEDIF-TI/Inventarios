@@ -1,6 +1,7 @@
 package mx.gob.sedif.inventarios.core.Resguardo;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -200,6 +201,39 @@ public class ResguardoService {
         historialService.registrarHistorial(resguardo, Movimiento.REASIGNACION, motivo);
 
         return resguardoMapper.toRecord(guardado);
+    }
+
+    @Transactional
+    public ReasignarLoteResponse reasignarLote(List<Integer> ids, Integer idNuevoEmpleado, String motivo) {
+        Empleado nuevoEmpleado = empleadoRepository.findById(idNuevoEmpleado)
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(idNuevoEmpleado)));
+
+        List<Integer> idsUnicos = validarIds(ids);
+        List<Integer> exitosos = new ArrayList<>();
+        List<ReasignarLoteError> errores = new ArrayList<>();
+
+        for (Integer id : idsUnicos) {
+            try {
+                Resguardo resguardo = resguardoRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
+
+                if (resguardo.getEstatusResguardo() != EstatusResguardo.ACTIVO) {
+                    throw new InvalidOperationException(MessageConstants.REASIGNAR_SOLO_ACTIVO);
+                }
+
+                resguardo.setEmpleado(nuevoEmpleado);
+                resguardo.setAreaAdscripcion(nuevoEmpleado.getAreaAdscripcion());
+                resguardo.setFechaAsignacionBien(LocalDate.now());
+                resguardoRepository.save(resguardo);
+
+                historialService.registrarHistorial(resguardo, Movimiento.REASIGNACION, motivo);
+                exitosos.add(id);
+            } catch (ResourceNotFoundException | InvalidOperationException e) {
+                errores.add(new ReasignarLoteError(id, e.getMessage()));
+            }
+        }
+
+        return new ReasignarLoteResponse(exitosos, errores);
     }
 
     @Transactional
