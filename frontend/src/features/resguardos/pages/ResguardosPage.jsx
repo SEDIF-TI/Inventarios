@@ -20,7 +20,7 @@ import ResguardoFormModal    from '../components/ResguardoFormModal'
 import ResguardoAccionModal  from '../components/ResguardoAccionModal'
 import ImprimirModal         from '../components/ImprimirModal'
 import api             from '@/services/api'
-import { sileo }       from 'sileo'
+import { notify } from '@/lib/notify'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
 
@@ -216,7 +216,7 @@ export default function ResguardosPage() {
         throw err
       })
 
-    sileo.promise(promise, {
+    notify.promise(promise, {
       loading: { title: 'Generando hoja de prueba...' },
       success: { title: 'Hoja de prueba lista', description: 'Imprímela al 100%, sin ajustar a página' },
       error:   { title: 'Error', description: 'No se pudo generar la hoja de prueba' },
@@ -253,7 +253,7 @@ export default function ResguardosPage() {
         throw err
       })
 
-      sileo.promise(promise, {
+      notify.promise(promise, {
         loading: { title: 'Generando formatos...' },
         success: (n) => ({ title: 'Formatos generados', description: `${n} formato(s) listos` }),
         error:   { title: 'Error', description: 'No se pudieron generar los formatos' },
@@ -295,7 +295,7 @@ export default function ResguardosPage() {
         throw err
       })
 
-      sileo.promise(promise, {
+      notify.promise(promise, {
         loading: { title: 'Generando etiquetas...' },
         success: (n) => ({ title: 'Etiquetas generadas', description: `${n} etiqueta(s) listas` }),
         error:   { title: 'Error', description: 'No se pudieron generar las etiquetas' },

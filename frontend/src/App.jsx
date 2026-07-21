@@ -4,10 +4,11 @@ import '@fontsource/inter/700.css'
 
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { CssBaseline, ThemeProvider, Box, GlobalStyles } from '@mui/material'
-import { Toaster } from 'sileo'
+import { Notifier } from './lib/notify'
 import { AuthProvider } from './context/AuthContext'
 import theme from './app/theme/theme'
 import Sidebar from './components/layout/Sidebar'
+import Footer from './components/layout/Footer'
 import RequireRole from './components/layout/RequireRole'
 import LoginPage     from './features/auth/pages/LoginPage'
 import HomePage      from './pages/HomePage'
@@ -32,12 +33,13 @@ function ProtectedLayout() {
           flex: 1,
           ml: `${SIDEBAR_CLOSED + MARGIN * 2}px`,
           p: 3,
-          minHeight: '100vh',
+          minHeight: 'calc(100vh - 60px)',
           position: 'relative',
         }}
       >
         <Outlet />
       </Box>
+      <Footer />
     </Box>
   )
 }
@@ -47,10 +49,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <GlobalStyles styles={{
-        '[data-sileo-viewport]': { zIndex: '1400 !important' },
         'html, body': { overflowX: 'hidden' },
       }} />
-      <Toaster position="top-center" theme="light" duration={4000} />
+      <Notifier />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

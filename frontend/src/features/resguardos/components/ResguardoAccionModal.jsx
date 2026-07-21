@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Stack, TextField, Autocomplete, Button } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
-import { sileo } from 'sileo'
+import { notify } from '@/lib/notify'
 import api from '@/services/api'
 
 const TITULOS = {
@@ -42,7 +42,7 @@ export default function ResguardoAccionModal({ open, onClose, tipo, resguardo, a
     }
 
     setLoading(true)
-    sileo.promise(request, {
+    notify.promise(request, {
       loading: { title: 'Procesando...' },
       success: { title: 'Listo', description: TITULOS[tipo] },
       error: (err) => ({

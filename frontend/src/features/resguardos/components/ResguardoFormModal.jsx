@@ -5,7 +5,7 @@ import {
   FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
-import { sileo } from 'sileo'
+import { notify } from '@/lib/notify'
 import api from '@/services/api'
 
 const SIN_RESGUARDANTE = { id: '', esSinResguardante: true }
@@ -98,7 +98,7 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
       : api.post('/resguardos/crear', payload)
 
     setLoading(true)
-    sileo.promise(request, {
+    notify.promise(request, {
       loading: { title: mode === 'editar' ? 'Actualizando...' : 'Guardando...' },
       success: mode === 'editar'
         ? { title: 'Resguardo actualizado', description: form.descripcionBien }

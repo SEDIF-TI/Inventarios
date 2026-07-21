@@ -10,7 +10,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import AppTable       from '@/components/ui/AppTable'
 import UsuarioFormModal from '../components/UsuarioFormModal'
 import api             from '@/services/api'
-import { sileo }       from 'sileo'
+import { notify } from '@/lib/notify'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
 
@@ -75,7 +75,7 @@ export default function UsuariosPage() {
 
     const request = api.put(`/usuarios/actualizar/${row.id}`, { activo: false })
 
-    sileo.promise(request, {
+    notify.promise(request, {
       loading: { title: 'Desactivando...' },
       success: { title: 'Usuario desactivado', description: row.nombreUsuario },
       error: (err) => ({

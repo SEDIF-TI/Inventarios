@@ -133,11 +133,11 @@ export default function AppTable({
       </Box>
       </Box>
 
-      {/* Paginación fija al fondo de la ventana */}
+      {/* Paginación fija, apoyada justo encima del footer */}
       <Box
         sx={{
           position: 'fixed',
-          bottom: 0,
+          bottom: '60px',
           left: 0,
           right: 0,
           zIndex: 1100,

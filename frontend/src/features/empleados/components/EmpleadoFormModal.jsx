@@ -4,7 +4,7 @@ import {
   FormControlLabel, Switch, Button,
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
-import { sileo } from 'sileo'
+import { notify } from '@/lib/notify'
 import api from '@/services/api'
 
 const EMPTY = {
@@ -51,7 +51,7 @@ export default function EmpleadoFormModal({ open, onClose, mode, empleado, areas
     const area = areas.find(a => a.id === form.idAreaAdscripcion)
 
     setLoading(true)
-    sileo.promise(request, {
+    notify.promise(request, {
       loading: {
         title: mode === 'editar' ? 'Actualizando...' : 'Guardando...',
       },

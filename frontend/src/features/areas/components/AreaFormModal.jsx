@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Stack, TextField, FormControlLabel, Switch, Button } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
-import { sileo } from 'sileo'
+import { notify } from '@/lib/notify'
 import api from '@/services/api'
 
 const EMPTY = {
@@ -37,7 +37,7 @@ export default function AreaFormModal({ open, onClose, mode, area, onSuccess }) 
       : api.post('/areas/crear', form)
 
     setLoading(true)
-    sileo.promise(request, {
+    notify.promise(request, {
       loading: { title: mode === 'editar' ? 'Actualizando...' : 'Guardando...' },
       success: mode === 'editar'
         ? { title: 'Área actualizada', description: form.descripcionAreaAdscripcion }

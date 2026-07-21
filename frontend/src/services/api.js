@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { sileo } from 'sileo'
+import { notify } from '@/lib/notify'
 
 const api = axios.create({
   baseURL: '/api',
@@ -25,7 +25,7 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 403) {
-      sileo.error({
+      notify.error({
         title: 'Acceso denegado',
         description: error.response?.data?.message || 'No tienes permisos para realizar esta acción.',
       })

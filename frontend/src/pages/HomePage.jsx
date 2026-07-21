@@ -3,8 +3,6 @@ import { Box, Typography, Stack, Divider } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'motion/react'
 import corazon      from '@/assets/logos/corazon.png'
-import familiasDif  from '@/assets/logos/familias-dif.png'
-import pensarGrande from '@/assets/logos/pensargrande.png'
 import api from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
 
@@ -113,7 +111,7 @@ export default function HomePage() {
   return (
     <Box
         sx={{
-          minHeight: 'calc(100vh - 48px)',
+          minHeight: 'calc(100vh - 108px)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -260,31 +258,6 @@ export default function HomePage() {
           </motion.div>
 
         </Stack>
-
-        {/* ── Logos institucionales ── */}
-        <motion.div {...fadeUp(0.56)} style={{ width: '100%', maxWidth: 600 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              px: 4, pt: 2,
-            }}
-          >
-            <Box
-              component="img"
-              src={familiasDif}
-              alt="Familias DIF"
-              sx={{ height: 36, width: 'auto', opacity: 0.55 }}
-            />
-            <Box
-              component="img"
-              src={pensarGrande}
-              alt="Pensar en Grande"
-              sx={{ height: 36, width: 'auto', opacity: 0.55 }}
-            />
-          </Box>
-        </motion.div>
 
       </Box>
   )
