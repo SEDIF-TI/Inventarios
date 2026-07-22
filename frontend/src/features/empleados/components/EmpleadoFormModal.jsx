@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { nombreEmpleado } from '@/lib/empleados'
 import {
   Stack, TextField, Autocomplete,
   FormControlLabel, Switch, Button,
@@ -45,8 +46,7 @@ export default function EmpleadoFormModal({ open, onClose, mode, empleado, areas
       ? api.put(`/empleados/actualizar/${empleado.id}`, payload)
       : api.post('/empleados/crear', payload)
 
-    const nombreCompleto = [form.apellidoPaternoEmpleado, form.apellidoMaternoEmpleado, form.nombreEmpleado]
-      .filter(Boolean).join(' ')
+    const nombreCompleto = nombreEmpleado(form)
 
     const area = areas.find(a => a.id === form.idAreaAdscripcion)
 

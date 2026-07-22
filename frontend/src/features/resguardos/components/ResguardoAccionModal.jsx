@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { nombreEmpleado } from '@/lib/empleados'
 import { Stack, TextField, Autocomplete, Button } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 import { notify } from '@/lib/notify'
@@ -80,10 +81,7 @@ export default function ResguardoAccionModal({ open, onClose, tipo, resguardo, a
         {necesitaEmpleado && (
           <Autocomplete
             options={empleados}
-            getOptionLabel={(e) =>
-              [e.apellidoPaternoEmpleado, e.apellidoMaternoEmpleado, e.nombreEmpleado]
-                .filter(Boolean).join(' ')
-            }
+            getOptionLabel={nombreEmpleado}
             value={empleadoSeleccionado}
             onChange={(_, v) => setIdEmpleado(v?.id ?? '')}
             renderInput={(params) => (

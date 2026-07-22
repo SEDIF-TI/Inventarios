@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import {
   Box, Table, TableHead, TableBody, TableRow, TableCell,
-  TableContainer, Paper, Pagination, Typography,
+  TableContainer, Paper, Pagination, Typography, TableSortLabel,
 } from '@mui/material'
+import ColumnaMenu from './ColumnaMenu'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 
@@ -30,7 +31,19 @@ export default function AppTable({
   pageCount: pageCountControlado,
   onPageChange,
   totalElements,
+  orden,
+  onOrdenChange,
+  onFijarOrden,
+  filtrosColumna = {},
+  onFiltroColumna,
+  mensajeVacio = 'Sin resultados',
 }) {
+  // Una columna es ordenable si declara `sortKey` y la página pasó el manejador.
+  const ordenable = (col) => Boolean(col.sortKey && onOrdenChange)
+
+  // Ojo: hay que exigir col.sortKey. Sin eso, una columna sin ordenar (acciones, checkbox)
+  // compara undefined === undefined => true y se intenta leer orden.dir con orden en null.
+  const ordenActivo = (col) => Boolean(col.sortKey) && orden?.campo === col.sortKey
   const esControlada = typeof onPageChange === 'function'
   const [pageInterna, setPageInterna] = useState(1)
 
@@ -68,8 +81,29 @@ export default function AppTable({
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
                   }}
+                  sortDirection={ordenActivo(col) ? orden.dir : false}
                 >
-                  {col.label}
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {ordenable(col) ? (
+                      <TableSortLabel
+                        active={ordenActivo(col)}
+                        direction={ordenActivo(col) ? orden.dir : 'asc'}
+                        onClick={() => onOrdenChange(col.sortKey)}
+                      >
+                        {col.label}
+                      </TableSortLabel>
+                    ) : (
+                      col.label
+                    )}
+
+                    <ColumnaMenu
+                      col={col}
+                      orden={orden}
+                      onFijarOrden={onFijarOrden}
+                      valorFiltro={filtrosColumna[col.filterKey] ?? ''}
+                      onFiltroChange={onFiltroColumna}
+                    />
+                  </Box>
                 </TableCell>
               ))}
             </TableRow>
@@ -90,7 +124,7 @@ export default function AppTable({
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
                   <Typography variant="body2" color="text.secondary">
-                    Sin resultados
+                    {mensajeVacio}
                   </Typography>
                 </TableCell>
               </TableRow>

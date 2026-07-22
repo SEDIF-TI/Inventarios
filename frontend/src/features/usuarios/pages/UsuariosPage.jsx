@@ -13,6 +13,7 @@ import api             from '@/services/api'
 import { notify } from '@/lib/notify'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
+import useFiltrosColumna  from '@/hooks/useFiltrosColumna'
 
 const ROL_CHIP = {
   SUPERADMIN: { label: 'Superadmin', color: 'error'   },
@@ -21,16 +22,27 @@ const ROL_CHIP = {
 }
 
 const COLUMNS = (onEdit, onEliminar) => [
-  { key: 'nombreUsuario', label: 'Usuario' },
+  { key: 'nombreUsuario', label: 'Usuario', sortKey: 'nombreUsuario', filterKey: 'nombreUsuario' },
   {
-    key: 'rol', label: 'Rol', width: 140,
+    key: 'rol', label: 'Rol', width: 140, sortKey: 'rol',
+    filterKey: 'rol',
+    filterTipo: 'opciones',
+    filterOpciones: [
+      { value: 'SUPERADMIN', label: 'Superadmin' },
+      { value: 'ADMIN',      label: 'Admin'      },
+      { value: 'ANALISTA',   label: 'Analista'   },
+    ],
     render: (row) => {
       const cfg = ROL_CHIP[row.rol] ?? { label: row.rol, color: 'default' }
       return <Chip label={cfg.label} color={cfg.color} size="small" />
     },
   },
   {
-    key: 'activo', label: 'Activo', width: 100,
+    key: 'activo', label: 'Activo', width: 100, sortKey: 'activo',
+    filterKey: 'activo',
+    filterTipo: 'opciones',
+    filterOpciones: [{ value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }],
+
     render: (row) => (
       <Chip label={row.activo ? 'Activo' : 'Inactivo'} color={row.activo ? 'success' : 'default'} size="small" />
     ),
@@ -62,8 +74,11 @@ export default function UsuariosPage() {
 
   const [form, setForm] = useState({ open: false, mode: 'crear', usuario: null })
 
-  const { rows: usuarios, page, setPage, totalPages, total, loading, recargar } =
-    useListadoPaginado('/usuarios', { q }, TAM_PAGINA)
+  const filtrosCol = useFiltrosColumna()
+
+  const { rows: usuarios, page, setPage, totalPages, total, loading, recargar,
+          orden, alternarOrden, fijarOrden } =
+    useListadoPaginado('/usuarios', { q, ...filtrosCol.filtros }, TAM_PAGINA)
 
   const refresh = () => { setSearch(''); return recargar() }
 
@@ -128,6 +143,11 @@ export default function UsuariosPage() {
           onPageChange={setPage}
           totalElements={total}
           isLoading={loading}
+          orden={orden}
+          onOrdenChange={alternarOrden}
+              onFijarOrden={fijarOrden}
+          filtrosColumna={filtrosCol.filtros}
+          onFiltroColumna={filtrosCol.setFiltro}
         />
 
       </Stack>

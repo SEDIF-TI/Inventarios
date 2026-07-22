@@ -1,27 +1,10 @@
-import { Box, Typography, Chip, Grid2 as Grid, Divider, Stack, Button } from '@mui/material'
-import PersonAddAlt1Icon    from '@mui/icons-material/PersonAddAlt1'
-import SwapHorizIcon        from '@mui/icons-material/SwapHoriz'
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline'
-import Inventory2Icon       from '@mui/icons-material/Inventory2'
+import { Box, Typography, Chip, Grid2 as Grid, Divider, Stack } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 
 const ESTATUS_CHIP = {
   ACTIVO:     { label: 'Activo',     color: 'success' },
   DISPONIBLE: { label: 'Disponible', color: 'info' },
   BAJA:       { label: 'Baja',       color: 'error' },
-}
-
-function accionesDisponibles(estatus) {
-  if (estatus === 'ACTIVO')     return ['baja', 'reasignar', 'disponible']
-  if (estatus === 'DISPONIBLE') return ['asignar', 'baja']
-  return []
-}
-
-const ACCION_CONFIG = {
-  asignar:    { label: 'Asignar',              icon: PersonAddAlt1Icon },
-  reasignar:  { label: 'Reasignar',            icon: SwapHorizIcon },
-  baja:       { label: 'Dar de baja',          icon: RemoveCircleOutlineIcon },
-  disponible: { label: 'Marcar disponible',    icon: Inventory2Icon },
 }
 
 function Seccion({ label }) {
@@ -49,10 +32,11 @@ function Campo({ label, value }) {
   )
 }
 
-export default function ResguardoDetalleModal({ open, onClose, resguardo, onAccion }) {
+// Este modal es solo de consulta: las acciones (baja, reasignar, asignar, disponible)
+// viven en la columna "Acciones" de la tabla.
+export default function ResguardoDetalleModal({ open, onClose, resguardo }) {
   if (!resguardo) return null
 
-  const acciones = accionesDisponibles(resguardo.estatus)
   const estatusCfg = ESTATUS_CHIP[resguardo.estatus] ?? { label: resguardo.estatus ?? '—', color: 'default' }
 
   return (
@@ -85,7 +69,7 @@ export default function ResguardoDetalleModal({ open, onClose, resguardo, onAcci
 
         <Grid size={12}><Seccion label="Observaciones" /></Grid>
 
-        <Grid size={8}>
+        <Grid size={12}>
           <Stack spacing={2}>
             <Campo label="Observación 1" value={resguardo.observacion} />
             <Campo label="Observación 2" value={resguardo.observacion2} />
@@ -95,26 +79,6 @@ export default function ResguardoDetalleModal({ open, onClose, resguardo, onAcci
               </Typography>
               <Chip label={estatusCfg.label} color={estatusCfg.color} size="small" />
             </Box>
-          </Stack>
-        </Grid>
-
-        <Grid size={4}>
-          <Stack spacing={1.5} alignItems="stretch">
-            {acciones.map((tipo) => {
-              const { label, icon: Icon } = ACCION_CONFIG[tipo]
-              return (
-                <Button
-                  key={tipo}
-                  variant="outlined"
-                  size="small"
-                  startIcon={<Icon fontSize="small" />}
-                  onClick={() => onAccion(tipo)}
-                  sx={{ borderRadius: 2, justifyContent: 'flex-start' }}
-                >
-                  {label}
-                </Button>
-              )
-            })}
           </Stack>
         </Grid>
 

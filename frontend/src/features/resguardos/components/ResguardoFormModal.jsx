@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { nombreEmpleado } from '@/lib/empleados'
 import {
   Stack, TextField, Autocomplete, FormControlLabel, Switch,
   Button, Grid2 as Grid, Typography, Divider, Box,
@@ -152,10 +153,7 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
             <Autocomplete
               options={[SIN_RESGUARDANTE, ...empleados]}
               getOptionLabel={(e) =>
-                e.esSinResguardante
-                  ? 'Sin resguardante'
-                  : [e.apellidoPaternoEmpleado, e.apellidoMaternoEmpleado, e.nombreEmpleado]
-                      .filter(Boolean).join(' ')
+                e.esSinResguardante ? 'Sin resguardante' : nombreEmpleado(e)
               }
               isOptionEqualToValue={(option, value) => option.id === value.id}
               value={empleadoSeleccionado}

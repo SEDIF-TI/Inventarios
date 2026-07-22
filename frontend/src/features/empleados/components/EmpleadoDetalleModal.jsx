@@ -1,4 +1,5 @@
 import { Box, Typography, Chip, Grid2 as Grid } from '@mui/material'
+import { nombreEmpleado } from '@/lib/empleados'
 import AppModal from '@/components/ui/AppModal'
 
 function Campo({ label, value }) {
@@ -17,11 +18,7 @@ function Campo({ label, value }) {
 export default function EmpleadoDetalleModal({ open, onClose, empleado }) {
   if (!empleado) return null
 
-  const nombreCompleto = [
-    empleado.apellidoPaternoEmpleado,
-    empleado.apellidoMaternoEmpleado,
-    empleado.nombreEmpleado,
-  ].filter(Boolean).join(' ')
+  const nombreCompleto = nombreEmpleado(empleado)
 
   return (
     <AppModal open={open} onClose={onClose} title="Detalle del empleado">

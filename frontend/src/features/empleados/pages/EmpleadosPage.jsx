@@ -1,44 +1,59 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, Typography, Button, TextField, InputAdornment, Stack, Chip,
+  Box, Typography, Button, TextField, Stack, Chip, Autocomplete,
 } from '@mui/material'
-import SearchIcon    from '@mui/icons-material/Search'
 import AddIcon       from '@mui/icons-material/Add'
 import EditIcon      from '@mui/icons-material/Edit'
+import CloseIcon     from '@mui/icons-material/Close'
 import AppTable      from '@/components/ui/AppTable'
+import FiltroAutocomplete from '@/components/ui/FiltroAutocomplete'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
 import EmpleadoFormModal    from '../components/EmpleadoFormModal'
 import api from '@/services/api'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
+import useFiltrosColumna  from '@/hooks/useFiltrosColumna'
 
 const TAM_PAGINA = 12
 
 const COLUMNS = (onEdit) => [
-  { key: 'noControlEmpleado', label: 'No. Control', width: 130 },
+  { key: 'noControlEmpleado', label: 'No. Control', width: 130, sortKey: 'noControlEmpleado', filterKey: 'noControl' },
   {
     key: 'apellidoPaternoEmpleado',
     label: 'Apellido Paterno',
+    sortKey: 'apellidoPaternoEmpleado',
+    filterKey: 'apellidoPaterno',
     render: (row) => row.apellidoPaternoEmpleado || '—',
   },
   {
     key: 'apellidoMaternoEmpleado',
     label: 'Apellido Materno',
+    sortKey: 'apellidoMaternoEmpleado',
+    filterKey: 'apellidoMaterno',
     render: (row) => row.apellidoMaternoEmpleado || '—',
   },
   {
     key: 'nombreEmpleado',
     label: 'Nombre',
+    sortKey: 'nombreEmpleado',
+    filterKey: 'nombre',
     render: (row) => row.nombreEmpleado || '—',
   },
   {
     key: 'areaAdscripcion',
     label: 'Área',
+    sortKey: 'areaAdscripcion.descripcionAreaAdscripcion',
+    filterKey: 'area',
     render: (row) => row.areaAdscripcion || '—',
   },
   {
     key: 'empleadoActivo',
     label: 'Activo',
+    sortKey: 'empleadoActivo',
+    filterKey: 'activo',
+    filterTipo: 'opciones',
+    filterOpciones: [{ value: 'true', label: 'Activo' }, { value: 'false', label: 'Inactivo' }],
+
     width: 100,
     render: (row) => (
       <Chip
@@ -69,13 +84,25 @@ const COLUMNS = (onEdit) => [
 export default function EmpleadosPage() {
   const [areas,  setAreas]  = useState([])
   const [search, setSearch] = useState('')
-  const q = useDebounce(search)
+  const [fNombre, setFNombre] = useState('')
+  const [fArea,   setFArea]   = useState(null)   // objeto área del catálogo
+
+  const q       = useDebounce(search)
+  const qNombre = useDebounce(fNombre)
 
   const [detalle, setDetalle] = useState({ open: false, empleado: null })
   const [form,    setForm]    = useState({ open: false, mode: 'crear', empleado: null })
 
-  const { rows: empleados, page, setPage, totalPages, total, loading, recargar } =
-    useListadoPaginado('/empleados', { q }, TAM_PAGINA)
+  // El backend filtra el área del empleado por descripción (LIKE), no por id.
+  const filtrosCol = useFiltrosColumna()
+
+  const { rows: empleados, page, setPage, totalPages, total, loading, recargar,
+          orden, alternarOrden, fijarOrden } =
+    useListadoPaginado(
+      '/empleados',
+      { q, nombre: qNombre, area: fArea?.descripcion ?? '', ...filtrosCol.filtros },
+      TAM_PAGINA,
+    )
 
   // Catálogo para el select del formulario: se pide una sola vez y no se pagina.
   useEffect(() => {
@@ -83,6 +110,26 @@ export default function EmpleadosPage() {
   }, [])
 
   const refresh = () => { setSearch(''); return recargar() }
+
+  // Sugerencias tomadas de lo que ya está cargado en pantalla.
+  const unicos = (valores) => [...new Set(valores.filter(Boolean))]
+
+  const sugerenciasNombre    = unicos(empleados.map(e => e.nombreEmpleado))
+  const sugerenciasGenerales = unicos([
+    ...empleados.map(e => e.noControlEmpleado),
+    ...empleados.map(e => e.nombreEmpleado),
+    ...empleados.map(e => e.apellidoPaternoEmpleado),
+    ...empleados.map(e => e.areaAdscripcion),
+  ])
+
+  const hayFiltros = Boolean(search || fNombre || fArea) || filtrosCol.hayFiltros
+
+  const limpiarFiltros = () => {
+    setSearch('')
+    setFNombre('')
+    setFArea(null)
+    filtrosCol.limpiar()
+  }
 
   const openEdit    = (row) => setForm({ open: true, mode: 'editar', empleado: row })
   const openDetalle = (row) => setDetalle({ open: true, empleado: row })
@@ -107,22 +154,44 @@ export default function EmpleadosPage() {
           </Button>
         </Box>
 
-        {/* Buscador */}
-        <TextField
-          placeholder="Buscar por No. de Control, apellidos, nombre o área..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{ maxWidth: 480 }}
-        />
+        {/* Filtros */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <FiltroAutocomplete
+            conIcono
+            label="Búsqueda general"
+            placeholder="No. de Control, apellidos, nombre o área..."
+            value={search}
+            onChange={setSearch}
+            opciones={sugerenciasGenerales}
+            sx={{ width: 360 }}
+          />
+
+          <FiltroAutocomplete
+            label="Nombre"
+            placeholder="Nombre del empleado..."
+            value={fNombre}
+            onChange={setFNombre}
+            opciones={sugerenciasNombre}
+            sx={{ width: 280 }}
+          />
+
+          <Autocomplete
+            options={areas}
+            getOptionLabel={(a) => a.descripcion ?? ''}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            value={fArea}
+            onChange={(_, v) => setFArea(v)}
+            renderInput={(params) => <TextField {...params} label="Área" />}
+            noOptionsText="Sin resultados"
+            sx={{ width: 300 }}
+          />
+
+          {hayFiltros && (
+            <Button variant="text" startIcon={<CloseIcon />} onClick={limpiarFiltros}>
+              Limpiar
+            </Button>
+          )}
+        </Box>
 
         <AppTable
           columns={COLUMNS(openEdit)}
@@ -133,6 +202,11 @@ export default function EmpleadosPage() {
           onPageChange={setPage}
           totalElements={total}
           isLoading={loading}
+          orden={orden}
+          onOrdenChange={alternarOrden}
+              onFijarOrden={fijarOrden}
+          filtrosColumna={filtrosCol.filtros}
+          onFiltroColumna={filtrosCol.setFiltro}
         />
 
       </Stack>
