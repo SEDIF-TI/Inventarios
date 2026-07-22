@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Stack, TextField, Autocomplete, Button, Alert, Typography } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 import { notify } from '@/lib/notify'
+import { filterEmpleado } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
 import { nombreEmpleado } from '@/lib/empleados'
 
@@ -78,8 +79,10 @@ export default function ReasignarLoteModal({ open, onClose, seleccionados, emple
         </Alert>
 
         <Autocomplete
+          autoHighlight
           options={opciones}
           getOptionLabel={nombreEmpleado}
+          filterOptions={filterEmpleado}
           isOptionEqualToValue={(a, b) => a.id === b.id}
           value={empleadoSeleccionado}
           onChange={(_, v) => setIdEmpleado(v?.id ?? '')}

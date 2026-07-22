@@ -1,14 +1,19 @@
-import { Autocomplete, TextField, InputAdornment } from '@mui/material'
+import { Autocomplete, TextField, InputAdornment, CircularProgress, Box } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 
 /**
  * Filtro de texto con autocompletado.
  *
- * Es freeSolo: puedes escribir lo que sea (el backend filtra con LIKE parcial), y las
- * sugerencias son solo una ayuda. Se muestran únicamente cuando ya escribiste algo,
- * para no desplegar un catálogo entero al enfocar el campo.
+ * Es freeSolo: se puede escribir cualquier cosa (el backend filtra con LIKE parcial) y las
+ * sugerencias son solo una ayuda, no una lista cerrada. Llegan del servidor conforme se
+ * escribe (ver hooks/useSugerencias).
  *
- * @param opciones lista de strings de donde salen las sugerencias
+ * autoHighlight es intencional: resalta la primera sugerencia para que Enter la seleccione
+ * en vez de buscar el texto a medias. Escribir "lap" y dar Enter busca "LAPTOP DELL", que
+ * es lo que se espera al teclear un prefijo. Si no hay sugerencias, Enter deja lo tecleado.
+ *
+ * @param opciones sugerencias a mostrar
+ * @param cargando si se están pidiendo sugerencias, para dar señal de actividad
  */
 export default function FiltroAutocomplete({
   label,
@@ -16,21 +21,21 @@ export default function FiltroAutocomplete({
   value,
   onChange,
   opciones = [],
+  cargando = false,
   conIcono = false,
   sx,
 }) {
   return (
     <Autocomplete
       freeSolo
+      autoHighlight
       options={opciones}
+      loading={cargando}
       inputValue={value ?? ''}
       onInputChange={(_, v) => onChange(v ?? '')}
-      filterOptions={(opts, { inputValue }) => {
-        const texto = inputValue.trim().toUpperCase()
-        if (!texto) return []
-        return opts.filter((o) => o?.toUpperCase().includes(texto)).slice(0, 8)
-      }}
-      noOptionsText="Sin sugerencias"
+      // Las sugerencias ya vienen filtradas por el servidor: volver a filtrarlas aquí
+      // solo las recortaría de más (p. ej. si coinciden por un campo que no se muestra).
+      filterOptions={(opts) => opts}
       sx={sx}
       renderInput={(params) => (
         <TextField
@@ -46,6 +51,13 @@ export default function FiltroAutocomplete({
                 </InputAdornment>
               ),
             }),
+            // Se conserva el endAdornment original: ahí viven la X de limpiar y la flecha.
+            endAdornment: (
+              <>
+                {cargando && <CircularProgress size={16} sx={{ mr: 1 }} />}
+                {params.InputProps.endAdornment}
+              </>
+            ),
           }}
         />
       )}

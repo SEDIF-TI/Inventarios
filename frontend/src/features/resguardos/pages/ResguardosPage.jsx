@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Box, Typography, Button, TextField, Stack, Chip,
@@ -12,6 +13,7 @@ import DownloadIcon    from '@mui/icons-material/Download'
 import CloseIcon       from '@mui/icons-material/Close'
 import SwapHorizIcon   from '@mui/icons-material/SwapHoriz'
 import DeselectIcon    from '@mui/icons-material/Deselect'
+import SelectAllIcon   from '@mui/icons-material/SelectAll'
 import AppTable      from '@/components/ui/AppTable'
 import AppDatePicker from '@/components/ui/AppDatePicker'
 import FiltroAutocomplete from '@/components/ui/FiltroAutocomplete'
@@ -24,11 +26,13 @@ import ResguardoFormModal    from '../components/ResguardoFormModal'
 import ResguardoAccionModal  from '../components/ResguardoAccionModal'
 import ImprimirModal         from '../components/ImprimirModal'
 import ReasignarLoteModal    from '../components/ReasignarLoteModal'
+import { labelArea, filterArea, filterEmpleado } from '@/lib/filtrosCatalogo'
 import api             from '@/services/api'
 import { notify } from '@/lib/notify'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
 import useFiltrosColumna  from '@/hooks/useFiltrosColumna'
+import useSugerencias     from '@/hooks/useSugerencias'
 
 const TAM_PAGINA = 12
 
@@ -161,27 +165,29 @@ const COLS_NORMAL = (onEdit, onAccion) => [
   },
 ]
 
+// Marca, Modelo, No. Serie y Fecha solo se ordenan: el backend no expone un filtro de
+// texto para ellos (la fecha sí, pero es coincidencia exacta y va en la barra de arriba).
 const COLS_ETIQUETAS = (seleccionados, toggle) => [
-  { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140 },
-  { key: 'descripcionBien',     label: 'Descripción'                 },
-  { key: 'marcaBien',           label: 'Marca',           width: 120 },
-  { key: 'modeloBien',          label: 'Modelo',          width: 120 },
-  { key: 'noSerieBien',         label: 'No. Serie',       width: 150 },
-  { key: 'areaAdscripcion',     label: 'Área'                        },
-  { key: 'fechaAsignacionBien', label: 'Fecha Asignación',width: 150 },
+  { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140, sortKey: 'noInventarioBien', filterKey: 'noInventario' },
+  { key: 'descripcionBien',     label: 'Descripción',                 sortKey: 'descripcionBien',  filterKey: 'descripcion'  },
+  { key: 'marcaBien',           label: 'Marca',           width: 120, sortKey: 'marcaBien'   },
+  { key: 'modeloBien',          label: 'Modelo',          width: 120, sortKey: 'modeloBien'  },
+  { key: 'noSerieBien',         label: 'No. Serie',       width: 150, sortKey: 'noSerieBien' },
+  { key: 'areaAdscripcion',     label: 'Área',                        sortKey: 'areaAdscripcion.descripcionAreaAdscripcion', filterKey: 'area' },
+  { key: 'fechaAsignacionBien', label: 'Fecha Asignación',width: 150, sortKey: 'fechaAsignacionBien' },
   checkCol(seleccionados, toggle),
 ]
 
 const COLS_FORMATOS = (seleccionados, toggle) => [
-  { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140 },
-  { key: 'cogBien',             label: 'COG',             width: 90  },
-  { key: 'descripcionBien',     label: 'Descripción'                 },
-  { key: 'empleado',            label: 'Empleado'                    },
-  { key: 'areaAdscripcion',     label: 'Área'                        },
-  { key: 'estadoBien',          label: 'Estado',          width: 110 },
-  { key: 'fechaAsignacionBien', label: 'Fecha Asignación',width: 150 },
+  { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140, sortKey: 'noInventarioBien', filterKey: 'noInventario' },
+  { key: 'cogBien',             label: 'COG',             width: 90,  sortKey: 'cogBien'    },
+  { key: 'descripcionBien',     label: 'Descripción',                 sortKey: 'descripcionBien',  filterKey: 'descripcion'  },
+  { key: 'empleado',            label: 'Empleado',                    sortKey: 'empleado.nombreEmpleado', filterKey: 'empleado' },
+  { key: 'areaAdscripcion',     label: 'Área',                        sortKey: 'areaAdscripcion.descripcionAreaAdscripcion', filterKey: 'area' },
+  { key: 'estadoBien',          label: 'Estado',          width: 110, sortKey: 'estadoBien' },
+  { key: 'fechaAsignacionBien', label: 'Fecha Asignación',width: 150, sortKey: 'fechaAsignacionBien' },
   {
-    key: 'activo', label: 'Activo', width: 100,
+    key: 'activo', label: 'Activo', width: 100, sortKey: 'activo',
     render: (row) => (
       <Chip label={row.activo ? 'Activo' : 'Inactivo'} color={row.activo ? 'success' : 'default'} size="small" />
     ),
@@ -255,6 +261,7 @@ export default function ResguardosPage() {
         idArea:          filtroArea?.id ?? '',
         fechaAsignacion: filtroFecha,
         empleado:        filtroEmpleado ? nombreEmpleado(filtroEmpleado) : '',
+        ...filtrosCol.filtros,
       }
     : {
         q,
@@ -269,7 +276,7 @@ export default function ResguardosPage() {
   // Se miran los valores ya debounceados: son los que de verdad se envían, así no se
   // dispara una consulta a media palabra.
   const filtrosActivos = modoImpresion
-    ? Boolean(filtroArea || filtroFecha || filtroEmpleado)
+    ? Boolean(filtroArea || filtroFecha || filtroEmpleado) || filtrosCol.hayFiltros
     : Boolean(q || fEmpleado || fArea || qDescripcion) || filtrosCol.hayFiltros
 
   const debeCargar = mostrarTodos || filtrosActivos
@@ -290,17 +297,16 @@ export default function ResguardosPage() {
 
   const refresh = () => { setSearch(''); return recargar() }
 
-  // Las sugerencias salen de lo que ya está cargado en pantalla: no hay endpoint de
-  // catálogo para descripciones, y pedir todo el listado solo para autocompletar sería caro.
-  const unicos = (valores) => [...new Set(valores.filter(Boolean))]
+  // Sugerencias pedidas al servidor conforme se escribe (ver hooks/useSugerencias).
+  const sugerenciasGenerales = useSugerencias(
+    '/resguardos', 'q',
+    ['descripcionBien', 'noInventarioBien', 'empleado', 'areaAdscripcion'],
+    search,
+  )
 
-  const sugerenciasDescripcion = unicos(resguardos.map(r => r.descripcionBien))
-  const sugerenciasGenerales   = unicos([
-    ...resguardos.map(r => r.descripcionBien),
-    ...resguardos.map(r => r.noInventarioBien),
-    ...resguardos.map(r => r.empleado),
-    ...resguardos.map(r => r.areaAdscripcion),
-  ])
+  const sugerenciasDescripcion = useSugerencias(
+    '/resguardos', 'descripcion', ['descripcionBien'], fDescripcion,
+  )
 
   const hayFiltros = Boolean(search || fEmpleado || fArea || fDescripcion) || filtrosCol.hayFiltros
 
@@ -314,6 +320,45 @@ export default function ResguardosPage() {
 
   // Vacía solo la selección; los filtros y el modo se quedan como están.
   const limpiarSeleccion = () => setSeleccionados(new Map())
+
+  /**
+   * Filas de la hoja actual que se agregarían con la selección masiva.
+   *
+   * Solo la hoja visible, y siempre sumando: lo ya marcado en otras hojas se respeta.
+   * En modo reasignar hay que aplicar el candado sobre la marcha, no con el empleado
+   * bloqueado del render: si la selección arranca vacía, la primera fila que entra es la
+   * que fija la persona, y sin esto se colarían bienes de todos los empleados de la hoja.
+   */
+  const filasAAgregar = () => {
+    let bloqueado = seleccionados.size > 0
+      ? seleccionados.values().next().value.idEmpleado
+      : null
+
+    const pendientes = []
+    for (const row of resguardos) {
+      if (seleccionados.has(row.id)) continue
+      if (modoReasignar) {
+        if (row.idEmpleado == null) continue
+        if (bloqueado != null && row.idEmpleado !== bloqueado) continue
+        if (bloqueado == null) bloqueado = row.idEmpleado
+      }
+      pendientes.push(row)
+    }
+    return pendientes
+  }
+
+  // Solo tiene sentido donde hay checkboxes (impresión o reasignar) y con algo filtrado:
+  // es el flujo de "acoté a un área / persona, ahora márcame todo lo que salió".
+  const puedeSeleccionarHoja = Boolean(modo) && filtrosActivos && filasAAgregar().length > 0
+
+  const seleccionarHoja = () => {
+    const pendientes = filasAAgregar()
+    setSeleccionados(prev => {
+      const next = new Map(prev)
+      for (const row of pendientes) next.set(row.id, row)
+      return next
+    })
+  }
 
   const openEdit     = (row) => setForm({ open: true, mode: 'editar', resguardo: row })
   const openDetalle  = (row) => setDetalle({ open: true, resguardo: row })
@@ -373,6 +418,13 @@ export default function ResguardosPage() {
   }
 
   const onReasignarLoteExito = () => { salirModo(); recargar() }
+
+  // Pulsar "Resguardos" en el sidebar estando ya aquí no cambia la ruta ni remonta la
+  // página, así que el modo (etiquetas / formatos / reasignar) sobreviviría y parecería
+  // que el botón no hace nada. location.key cambia en cada navegación —incluida la que
+  // apunta a la ruta actual—, así que sirve para detectar que se pidió entrar de nuevo.
+  const { key: navKey } = useLocation()
+  useEffect(() => { salirModo() }, [navKey])   // eslint-disable-line react-hooks/exhaustive-deps
 
   const toBase64 = (url) =>
     fetch(url).then(r => r.blob()).then(b => new Promise(res => {
@@ -588,13 +640,16 @@ export default function ResguardosPage() {
                   placeholder="Empleado, área, No. de inventario o descripción..."
                   value={search}
                   onChange={setSearch}
-                  opciones={sugerenciasGenerales}
+                  opciones={sugerenciasGenerales.opciones}
+                  cargando={sugerenciasGenerales.cargando}
                   sx={{ width: 360 }}
                 />
 
                 <Autocomplete
+                  autoHighlight
                   options={empleados}
                   getOptionLabel={nombreEmpleado}
+                  filterOptions={filterEmpleado}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   value={fEmpleado}
                   onChange={(_, v) => setFEmpleado(v)}
@@ -604,8 +659,10 @@ export default function ResguardosPage() {
                 />
 
                 <Autocomplete
+                  autoHighlight
                   options={areas}
-                  getOptionLabel={(a) => a.descripcion ?? ''}
+                  getOptionLabel={labelArea}
+                  filterOptions={filterArea}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   value={fArea}
                   onChange={(_, v) => setFArea(v)}
@@ -619,7 +676,8 @@ export default function ResguardosPage() {
                   placeholder="Descripción del bien..."
                   value={fDescripcion}
                   onChange={setFDescripcion}
-                  opciones={sugerenciasDescripcion}
+                  opciones={sugerenciasDescripcion.opciones}
+                  cargando={sugerenciasDescripcion.cargando}
                   sx={{ width: 280 }}
                 />
 
@@ -648,8 +706,10 @@ export default function ResguardosPage() {
             <motion.div key="filter-impresion" {...FADE}>
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <Autocomplete
+                  autoHighlight
                   options={empleados}
                   getOptionLabel={nombreEmpleado}
+                  filterOptions={filterEmpleado}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   value={filtroEmpleado}
                   onChange={(_, v) => setFiltroEmpleado(v)}
@@ -659,8 +719,10 @@ export default function ResguardosPage() {
                 />
 
                 <Autocomplete
+                  autoHighlight
                   options={areas}
-                  getOptionLabel={(a) => a.descripcion ?? ''}
+                  getOptionLabel={labelArea}
+                  filterOptions={filterArea}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   value={filtroArea}
                   onChange={(_, v) => setFiltroArea(v)}
@@ -687,6 +749,16 @@ export default function ResguardosPage() {
                 )}
 
                 <SwitchMostrarTodos valor={mostrarTodos} onChange={setMostrarTodos} />
+
+                {puedeSeleccionarHoja && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<SelectAllIcon />}
+                    onClick={seleccionarHoja}
+                  >
+                    Seleccionar esta hoja ({filasAAgregar().length})
+                  </Button>
+                )}
 
                 {seleccionados.size > 0 && (
                   <Button

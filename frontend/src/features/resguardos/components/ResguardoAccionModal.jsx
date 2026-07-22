@@ -3,6 +3,7 @@ import { nombreEmpleado } from '@/lib/empleados'
 import { Stack, TextField, Autocomplete, Button } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 import { notify } from '@/lib/notify'
+import { labelArea, filterArea, filterEmpleado } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
 
 const TITULOS = {
@@ -80,8 +81,10 @@ export default function ResguardoAccionModal({ open, onClose, tipo, resguardo, a
       <Stack spacing={2.5} sx={{ pt: 0.5 }}>
         {necesitaEmpleado && (
           <Autocomplete
+            autoHighlight
             options={empleados}
             getOptionLabel={nombreEmpleado}
+            filterOptions={filterEmpleado}
             value={empleadoSeleccionado}
             onChange={(_, v) => setIdEmpleado(v?.id ?? '')}
             renderInput={(params) => (
@@ -93,8 +96,10 @@ export default function ResguardoAccionModal({ open, onClose, tipo, resguardo, a
 
         {necesitaArea && (
           <Autocomplete
+            autoHighlight
             options={areas}
-            getOptionLabel={(a) => a.descripcion ?? ''}
+            getOptionLabel={labelArea}
+            filterOptions={filterArea}
             value={areaSeleccionada}
             onChange={(_, v) => setIdAreaAdscripcion(v?.id ?? '')}
             renderInput={(params) => <TextField {...params} label="Área de adscripción" />}

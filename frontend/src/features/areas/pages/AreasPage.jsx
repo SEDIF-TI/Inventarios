@@ -12,6 +12,7 @@ import AreaFormModal    from '../components/AreaFormModal'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
 import useFiltrosColumna  from '@/hooks/useFiltrosColumna'
+import useSugerencias     from '@/hooks/useSugerencias'
 
 const COLUMNS = (onEdit) => [
   { key: 'codigo', label: 'Código', width: 140, sortKey: 'codigoAreaAdscripcion', filterKey: 'codigo' },
@@ -89,12 +90,16 @@ export default function AreasPage() {
 
   const refresh = () => { setSearch(''); return recargar() }
 
-  // Sugerencias tomadas de lo que ya está cargado en pantalla.
-  const unicos = (valores) => [...new Set(valores.filter(Boolean))]
-
-  const sugerenciasCodigo      = unicos(areas.map(a => a.codigo))
-  const sugerenciasDescripcion = unicos(areas.map(a => a.descripcion))
-  const sugerenciasGenerales   = [...sugerenciasCodigo, ...sugerenciasDescripcion]
+  // Sugerencias pedidas al servidor conforme se escribe (ver hooks/useSugerencias).
+  const sugerenciasGenerales = useSugerencias(
+    '/areas', 'q', ['codigo', 'descripcion'], search,
+  )
+  const sugerenciasCodigo = useSugerencias(
+    '/areas', 'codigo', ['codigo'], fCodigo,
+  )
+  const sugerenciasDescripcion = useSugerencias(
+    '/areas', 'descripcion', ['descripcion'], fDescripcion,
+  )
 
   const hayFiltros = Boolean(search || fCodigo || fDescripcion) || filtrosCol.hayFiltros
 
@@ -135,7 +140,8 @@ export default function AreasPage() {
             placeholder="Código o descripción..."
             value={search}
             onChange={setSearch}
-            opciones={sugerenciasGenerales}
+            opciones={sugerenciasGenerales.opciones}
+            cargando={sugerenciasGenerales.cargando}
             sx={{ width: 360 }}
           />
 
@@ -144,7 +150,8 @@ export default function AreasPage() {
             placeholder="Código del área..."
             value={fCodigo}
             onChange={setFCodigo}
-            opciones={sugerenciasCodigo}
+            opciones={sugerenciasCodigo.opciones}
+            cargando={sugerenciasCodigo.cargando}
             sx={{ width: 220 }}
           />
 
@@ -153,7 +160,8 @@ export default function AreasPage() {
             placeholder="Descripción del área..."
             value={fDescripcion}
             onChange={setFDescripcion}
-            opciones={sugerenciasDescripcion}
+            opciones={sugerenciasDescripcion.opciones}
+            cargando={sugerenciasDescripcion.cargando}
             sx={{ width: 320 }}
           />
 

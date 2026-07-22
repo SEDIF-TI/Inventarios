@@ -9,10 +9,12 @@ import AppTable      from '@/components/ui/AppTable'
 import FiltroAutocomplete from '@/components/ui/FiltroAutocomplete'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
 import EmpleadoFormModal    from '../components/EmpleadoFormModal'
+import { labelArea, filterArea } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
 import useDebounce        from '@/hooks/useDebounce'
 import useListadoPaginado from '@/hooks/useListadoPaginado'
 import useFiltrosColumna  from '@/hooks/useFiltrosColumna'
+import useSugerencias     from '@/hooks/useSugerencias'
 
 const TAM_PAGINA = 12
 
@@ -111,16 +113,16 @@ export default function EmpleadosPage() {
 
   const refresh = () => { setSearch(''); return recargar() }
 
-  // Sugerencias tomadas de lo que ya está cargado en pantalla.
-  const unicos = (valores) => [...new Set(valores.filter(Boolean))]
+  // Sugerencias pedidas al servidor conforme se escribe (ver hooks/useSugerencias).
+  const sugerenciasGenerales = useSugerencias(
+    '/empleados', 'q',
+    ['noControlEmpleado', 'nombreEmpleado', 'apellidoPaternoEmpleado', 'areaAdscripcion'],
+    search,
+  )
 
-  const sugerenciasNombre    = unicos(empleados.map(e => e.nombreEmpleado))
-  const sugerenciasGenerales = unicos([
-    ...empleados.map(e => e.noControlEmpleado),
-    ...empleados.map(e => e.nombreEmpleado),
-    ...empleados.map(e => e.apellidoPaternoEmpleado),
-    ...empleados.map(e => e.areaAdscripcion),
-  ])
+  const sugerenciasNombre = useSugerencias(
+    '/empleados', 'nombre', ['nombreEmpleado'], fNombre,
+  )
 
   const hayFiltros = Boolean(search || fNombre || fArea) || filtrosCol.hayFiltros
 
@@ -162,7 +164,8 @@ export default function EmpleadosPage() {
             placeholder="No. de Control, apellidos, nombre o área..."
             value={search}
             onChange={setSearch}
-            opciones={sugerenciasGenerales}
+            opciones={sugerenciasGenerales.opciones}
+            cargando={sugerenciasGenerales.cargando}
             sx={{ width: 360 }}
           />
 
@@ -171,13 +174,16 @@ export default function EmpleadosPage() {
             placeholder="Nombre del empleado..."
             value={fNombre}
             onChange={setFNombre}
-            opciones={sugerenciasNombre}
+            opciones={sugerenciasNombre.opciones}
+            cargando={sugerenciasNombre.cargando}
             sx={{ width: 280 }}
           />
 
           <Autocomplete
+            autoHighlight
             options={areas}
-            getOptionLabel={(a) => a.descripcion ?? ''}
+            getOptionLabel={labelArea}
+            filterOptions={filterArea}
             isOptionEqualToValue={(a, b) => a.id === b.id}
             value={fArea}
             onChange={(_, v) => setFArea(v)}

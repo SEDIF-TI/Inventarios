@@ -6,6 +6,7 @@ import {
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 import { notify } from '@/lib/notify'
+import { labelArea, filterArea } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
 
 const EMPTY = {
@@ -123,8 +124,10 @@ export default function EmpleadoFormModal({ open, onClose, mode, empleado, areas
         />
 
         <Autocomplete
+          autoHighlight
           options={areas}
-          getOptionLabel={(a) => a.descripcion ?? ''}
+          getOptionLabel={labelArea}
+          filterOptions={filterArea}
           value={areaSeleccionada}
           onChange={(_, newVal) =>
             setForm(prev => ({ ...prev, idAreaAdscripcion: newVal?.id ?? '' }))

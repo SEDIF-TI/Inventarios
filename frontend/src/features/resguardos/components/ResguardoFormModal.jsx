@@ -7,9 +7,18 @@ import {
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
 import { notify } from '@/lib/notify'
+import { filtrarOpciones } from '@/lib/filtrarOpciones'
+import { labelArea, filterArea } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
 
 const SIN_RESGUARDANTE = { id: '', esSinResguardante: true }
+
+const etiquetaEmpleado = (e) =>
+  e.esSinResguardante ? 'Sin resguardante' : nombreEmpleado(e)
+
+// Referencia estable: ver el comentario en lib/filtrosCatalogo sobre por qué
+// filterOptions/getOptionLabel no deben recrearse en cada render.
+const filterEtiquetaEmpleado = filtrarOpciones(etiquetaEmpleado)
 
 function Seccion({ label }) {
   return (
@@ -141,8 +150,10 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
         <Grid container spacing={2}>
           <Grid size={6}>
             <Autocomplete
+              autoHighlight
               options={areas}
-              getOptionLabel={(a) => a.descripcion ?? ''}
+              getOptionLabel={labelArea}
+              filterOptions={filterArea}
               value={areaSeleccionada}
               onChange={(_, v) => setForm(prev => ({ ...prev, idAreaAdscripcion: v?.id ?? '' }))}
               renderInput={(params) => <TextField {...params} label="Área de adscripción" />}
@@ -151,10 +162,10 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
           </Grid>
           <Grid size={6}>
             <Autocomplete
+              autoHighlight
               options={[SIN_RESGUARDANTE, ...empleados]}
-              getOptionLabel={(e) =>
-                e.esSinResguardante ? 'Sin resguardante' : nombreEmpleado(e)
-              }
+              getOptionLabel={etiquetaEmpleado}
+              filterOptions={filterEtiquetaEmpleado}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               value={empleadoSeleccionado}
               onChange={(_, v) => setForm(prev => ({ ...prev, idEmpleado: v?.id ?? '' }))}
