@@ -67,11 +67,9 @@ const COLUMNS = (onEdit) => [
 const TAM_PAGINA = 12
 
 export default function AreasPage() {
-  const [search,       setSearch]       = useState('')
   const [fCodigo,      setFCodigo]      = useState('')
   const [fDescripcion, setFDescripcion] = useState('')
 
-  const q            = useDebounce(search)
   const qCodigo      = useDebounce(fCodigo)
   const qDescripcion = useDebounce(fDescripcion)
 
@@ -84,16 +82,13 @@ export default function AreasPage() {
           orden, alternarOrden, fijarOrden } =
     useListadoPaginado(
       '/areas',
-      { q, codigo: qCodigo, descripcion: qDescripcion, ...filtrosCol.filtros },
+      { codigo: qCodigo, descripcion: qDescripcion, ...filtrosCol.filtros },
       TAM_PAGINA,
     )
 
-  const refresh = () => { setSearch(''); return recargar() }
+  const refresh = () => recargar()
 
   // Sugerencias pedidas al servidor conforme se escribe (ver hooks/useSugerencias).
-  const sugerenciasGenerales = useSugerencias(
-    '/areas', 'q', ['codigo', 'descripcion'], search,
-  )
   const sugerenciasCodigo = useSugerencias(
     '/areas', 'codigo', ['codigo'], fCodigo,
   )
@@ -101,10 +96,9 @@ export default function AreasPage() {
     '/areas', 'descripcion', ['descripcion'], fDescripcion,
   )
 
-  const hayFiltros = Boolean(search || fCodigo || fDescripcion) || filtrosCol.hayFiltros
+  const hayFiltros = Boolean(fCodigo || fDescripcion) || filtrosCol.hayFiltros
 
   const limpiarFiltros = () => {
-    setSearch('')
     setFCodigo('')
     setFDescripcion('')
     filtrosCol.limpiar()
@@ -136,16 +130,6 @@ export default function AreasPage() {
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FiltroAutocomplete
             conIcono
-            label="Búsqueda general"
-            placeholder="Código o descripción..."
-            value={search}
-            onChange={setSearch}
-            opciones={sugerenciasGenerales.opciones}
-            cargando={sugerenciasGenerales.cargando}
-            sx={{ width: 360 }}
-          />
-
-          <FiltroAutocomplete
             label="Código"
             placeholder="Código del área..."
             value={fCodigo}

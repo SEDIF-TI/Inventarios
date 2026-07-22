@@ -81,9 +81,19 @@ export default function useListadoPaginado(url, filtros = {}, size = TAM_PAGINA,
 
     return api.get(url, { params })
       .then((r) => {
+        const totalPaginas = r.data.totalPages ?? 0
+
+        // Red de seguridad: si la página pedida ya no existe con los filtros actuales
+        // (p. ej. una respuesta que llega tarde de un filtro anterior con más páginas),
+        // se pide la 1 en vez de dejar la tabla en blanco.
+        if (totalPaginas > 0 && page > totalPaginas) {
+          setPage(1)
+          return
+        }
+
         setRows(r.data.content ?? [])
         setTotal(r.data.totalElements ?? 0)
-        setTotalPages(r.data.totalPages ?? 0)
+        setTotalPages(totalPaginas)
       })
       .catch(() => {
         setRows([])

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { nombreEmpleado } from '@/lib/empleados'
 import {
-  Stack, TextField, Autocomplete, FormControlLabel, Switch,
+  Stack, TextField, FormControlLabel, Switch,
   Button, Grid2 as Grid, Typography, Divider, Box,
   FormControl, InputLabel, Select, MenuItem,
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
+import CatalogoAutocomplete from '@/components/ui/CatalogoAutocomplete'
 import { notify } from '@/lib/notify'
 import { filtrarOpciones } from '@/lib/filtrarOpciones'
 import { labelArea, filterArea } from '@/lib/filtrosCatalogo'
@@ -149,28 +150,23 @@ export default function ResguardoFormModal({ open, onClose, mode, resguardo, are
         <Seccion label="Asignación" />
         <Grid container spacing={2}>
           <Grid size={6}>
-            <Autocomplete
-              autoHighlight
+            <CatalogoAutocomplete
+              label="Área de adscripción"
               options={areas}
-              getOptionLabel={labelArea}
-              filterOptions={filterArea}
+              getLabel={labelArea}
+              filterFn={filterArea}
               value={areaSeleccionada}
-              onChange={(_, v) => setForm(prev => ({ ...prev, idAreaAdscripcion: v?.id ?? '' }))}
-              renderInput={(params) => <TextField {...params} label="Área de adscripción" />}
-              noOptionsText="Sin resultados"
+              onChange={(v) => setForm(prev => ({ ...prev, idAreaAdscripcion: v?.id ?? '' }))}
             />
           </Grid>
           <Grid size={6}>
-            <Autocomplete
-              autoHighlight
+            <CatalogoAutocomplete
+              label="Empleado"
               options={[SIN_RESGUARDANTE, ...empleados]}
-              getOptionLabel={etiquetaEmpleado}
-              filterOptions={filterEtiquetaEmpleado}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
+              getLabel={etiquetaEmpleado}
+              filterFn={filterEtiquetaEmpleado}
               value={empleadoSeleccionado}
-              onChange={(_, v) => setForm(prev => ({ ...prev, idEmpleado: v?.id ?? '' }))}
-              renderInput={(params) => <TextField {...params} label="Empleado" />}
-              noOptionsText="Sin resultados"
+              onChange={(v) => setForm(prev => ({ ...prev, idEmpleado: v?.id ?? '' }))}
             />
           </Grid>
         </Grid>

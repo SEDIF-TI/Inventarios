@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { nombreEmpleado } from '@/lib/empleados'
 import {
-  Stack, TextField, Autocomplete,
+  Stack, TextField,
   FormControlLabel, Switch, Button,
 } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
+import CatalogoAutocomplete from '@/components/ui/CatalogoAutocomplete'
 import { notify } from '@/lib/notify'
 import { labelArea, filterArea } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
@@ -123,19 +124,15 @@ export default function EmpleadoFormModal({ open, onClose, mode, empleado, areas
           fullWidth
         />
 
-        <Autocomplete
-          autoHighlight
+        <CatalogoAutocomplete
+          label="Área de adscripción"
           options={areas}
-          getOptionLabel={labelArea}
-          filterOptions={filterArea}
+          getLabel={labelArea}
+          filterFn={filterArea}
           value={areaSeleccionada}
-          onChange={(_, newVal) =>
-            setForm(prev => ({ ...prev, idAreaAdscripcion: newVal?.id ?? '' }))
+          onChange={(v) =>
+            setForm(prev => ({ ...prev, idAreaAdscripcion: v?.id ?? '' }))
           }
-          renderInput={(params) => (
-            <TextField {...params} label="Área de adscripción" />
-          )}
-          noOptionsText="Sin resultados"
         />
 
         <FormControlLabel

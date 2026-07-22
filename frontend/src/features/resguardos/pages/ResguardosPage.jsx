@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  Box, Typography, Button, TextField, Stack, Chip,
-  Checkbox, Autocomplete, IconButton, Tooltip,
+  Box, Typography, Button, Stack, Chip,
+  Checkbox, IconButton, Tooltip,
   FormControlLabel, Switch,
 } from '@mui/material'
 import AddIcon         from '@mui/icons-material/Add'
@@ -17,6 +17,7 @@ import SelectAllIcon   from '@mui/icons-material/SelectAll'
 import AppTable      from '@/components/ui/AppTable'
 import AppDatePicker from '@/components/ui/AppDatePicker'
 import FiltroAutocomplete from '@/components/ui/FiltroAutocomplete'
+import CatalogoAutocomplete from '@/components/ui/CatalogoAutocomplete'
 import { nombreEmpleado } from '@/lib/empleados'
 import { accionesDisponibles, ACCION_CONFIG } from '../acciones'
 import pngGobUrl      from '@/assets/logos/png-gob.png'
@@ -170,6 +171,7 @@ const COLS_NORMAL = (onEdit, onAccion) => [
 const COLS_ETIQUETAS = (seleccionados, toggle) => [
   { key: 'noInventarioBien',    label: 'No. Inventario',  width: 140, sortKey: 'noInventarioBien', filterKey: 'noInventario' },
   { key: 'descripcionBien',     label: 'Descripción',                 sortKey: 'descripcionBien',  filterKey: 'descripcion'  },
+  { key: 'empleado',            label: 'Empleado',        width: 200, sortKey: 'empleado.nombreEmpleado', filterKey: 'empleado' },
   { key: 'marcaBien',           label: 'Marca',           width: 120, sortKey: 'marcaBien'   },
   { key: 'modeloBien',          label: 'Modelo',          width: 120, sortKey: 'modeloBien'  },
   { key: 'noSerieBien',         label: 'No. Serie',       width: 150, sortKey: 'noSerieBien' },
@@ -217,7 +219,6 @@ const COLS_REASIGNAR = (seleccionados, toggle, seleccionable) => [
 export default function ResguardosPage() {
   const [areas,     setAreas]     = useState([])
   const [empleados, setEmpleados] = useState([])
-  const [search,    setSearch]    = useState('')
 
   const [detalle,        setDetalle]        = useState({ open: false, resguardo: null })
   const [form,           setForm]           = useState({ open: false, mode: 'crear', resguardo: null })
@@ -241,7 +242,6 @@ export default function ResguardosPage() {
   const [fArea,        setFArea]        = useState(null)   // objeto área del catálogo
   const [fDescripcion, setFDescripcion] = useState('')
 
-  const q            = useDebounce(search)
   const qDescripcion = useDebounce(fDescripcion)
 
   // Filtros puestos desde el menú de cada columna
@@ -264,7 +264,6 @@ export default function ResguardosPage() {
         ...filtrosCol.filtros,
       }
     : {
-        q,
         empleado:    fEmpleado ? nombreEmpleado(fEmpleado) : '',
         idArea:      fArea?.id ?? '',
         descripcion: qDescripcion,
@@ -273,11 +272,11 @@ export default function ResguardosPage() {
         ...filtrosCol.filtros,
       }
 
-  // Se miran los valores ya debounceados: son los que de verdad se envían, así no se
-  // dispara una consulta a media palabra.
+  // Se mira el valor ya debounceado (qDescripcion): es el que de verdad se envía, así no
+  // se dispara una consulta a media palabra.
   const filtrosActivos = modoImpresion
     ? Boolean(filtroArea || filtroFecha || filtroEmpleado) || filtrosCol.hayFiltros
-    : Boolean(q || fEmpleado || fArea || qDescripcion) || filtrosCol.hayFiltros
+    : Boolean(fEmpleado || fArea || qDescripcion) || filtrosCol.hayFiltros
 
   const debeCargar = mostrarTodos || filtrosActivos
 
@@ -295,23 +294,16 @@ export default function ResguardosPage() {
       .catch(() => { setAreas([]); setEmpleados([]) })
   }, [])
 
-  const refresh = () => { setSearch(''); return recargar() }
+  const refresh = () => recargar()
 
   // Sugerencias pedidas al servidor conforme se escribe (ver hooks/useSugerencias).
-  const sugerenciasGenerales = useSugerencias(
-    '/resguardos', 'q',
-    ['descripcionBien', 'noInventarioBien', 'empleado', 'areaAdscripcion'],
-    search,
-  )
-
   const sugerenciasDescripcion = useSugerencias(
     '/resguardos', 'descripcion', ['descripcionBien'], fDescripcion,
   )
 
-  const hayFiltros = Boolean(search || fEmpleado || fArea || fDescripcion) || filtrosCol.hayFiltros
+  const hayFiltros = Boolean(fEmpleado || fArea || fDescripcion) || filtrosCol.hayFiltros
 
   const limpiarFiltros = () => {
-    setSearch('')
     setFEmpleado(null)
     setFArea(null)
     setFDescripcion('')
@@ -634,40 +626,23 @@ export default function ResguardosPage() {
           {!modoImpresion ? (
             <motion.div key="filter-normal" {...FADE}>
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <FiltroAutocomplete
-                  conIcono
-                  label="Búsqueda general"
-                  placeholder="Empleado, área, No. de inventario o descripción..."
-                  value={search}
-                  onChange={setSearch}
-                  opciones={sugerenciasGenerales.opciones}
-                  cargando={sugerenciasGenerales.cargando}
-                  sx={{ width: 360 }}
-                />
-
-                <Autocomplete
-                  autoHighlight
+                <CatalogoAutocomplete
+                  label="Empleado"
                   options={empleados}
-                  getOptionLabel={nombreEmpleado}
-                  filterOptions={filterEmpleado}
-                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  getLabel={nombreEmpleado}
+                  filterFn={filterEmpleado}
                   value={fEmpleado}
-                  onChange={(_, v) => setFEmpleado(v)}
-                  renderInput={(params) => <TextField {...params} label="Empleado" />}
-                  noOptionsText="Sin resultados"
+                  onChange={setFEmpleado}
                   sx={{ width: 280 }}
                 />
 
-                <Autocomplete
-                  autoHighlight
+                <CatalogoAutocomplete
+                  label="Área"
                   options={areas}
-                  getOptionLabel={labelArea}
-                  filterOptions={filterArea}
-                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  getLabel={labelArea}
+                  filterFn={filterArea}
                   value={fArea}
-                  onChange={(_, v) => setFArea(v)}
-                  renderInput={(params) => <TextField {...params} label="Área" />}
-                  noOptionsText="Sin resultados"
+                  onChange={setFArea}
                   sx={{ width: 280 }}
                 />
 
@@ -705,29 +680,25 @@ export default function ResguardosPage() {
           ) : (
             <motion.div key="filter-impresion" {...FADE}>
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Autocomplete
-                  autoHighlight
+                <CatalogoAutocomplete
+                  label="Empleado"
+                  placeholder="Buscar persona..."
                   options={empleados}
-                  getOptionLabel={nombreEmpleado}
-                  filterOptions={filterEmpleado}
-                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  getLabel={nombreEmpleado}
+                  filterFn={filterEmpleado}
                   value={filtroEmpleado}
-                  onChange={(_, v) => setFiltroEmpleado(v)}
-                  renderInput={(params) => <TextField {...params} label="Empleado" placeholder="Buscar persona..." />}
-                  noOptionsText="Sin resultados"
+                  onChange={setFiltroEmpleado}
                   sx={{ width: 300 }}
                 />
 
-                <Autocomplete
-                  autoHighlight
+                <CatalogoAutocomplete
+                  label="Área"
+                  placeholder="Buscar área..."
                   options={areas}
-                  getOptionLabel={labelArea}
-                  filterOptions={filterArea}
-                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  getLabel={labelArea}
+                  filterFn={filterArea}
                   value={filtroArea}
-                  onChange={(_, v) => setFiltroArea(v)}
-                  renderInput={(params) => <TextField {...params} label="Área" placeholder="Buscar área..." />}
-                  noOptionsText="Sin resultados"
+                  onChange={setFiltroArea}
                   sx={{ width: 340 }}
                 />
 

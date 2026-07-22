@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, Typography, Button, TextField, Stack, Chip, Autocomplete,
+  Box, Typography, Button, Stack, Chip,
 } from '@mui/material'
 import AddIcon       from '@mui/icons-material/Add'
 import EditIcon      from '@mui/icons-material/Edit'
 import CloseIcon     from '@mui/icons-material/Close'
 import AppTable      from '@/components/ui/AppTable'
-import FiltroAutocomplete from '@/components/ui/FiltroAutocomplete'
+import FiltroAutocomplete   from '@/components/ui/FiltroAutocomplete'
+import CatalogoAutocomplete from '@/components/ui/CatalogoAutocomplete'
 import EmpleadoDetalleModal from '../components/EmpleadoDetalleModal'
 import EmpleadoFormModal    from '../components/EmpleadoFormModal'
 import { labelArea, filterArea } from '@/lib/filtrosCatalogo'
@@ -85,11 +86,9 @@ const COLUMNS = (onEdit) => [
 
 export default function EmpleadosPage() {
   const [areas,  setAreas]  = useState([])
-  const [search, setSearch] = useState('')
   const [fNombre, setFNombre] = useState('')
   const [fArea,   setFArea]   = useState(null)   // objeto área del catálogo
 
-  const q       = useDebounce(search)
   const qNombre = useDebounce(fNombre)
 
   const [detalle, setDetalle] = useState({ open: false, empleado: null })
@@ -102,7 +101,7 @@ export default function EmpleadosPage() {
           orden, alternarOrden, fijarOrden } =
     useListadoPaginado(
       '/empleados',
-      { q, nombre: qNombre, area: fArea?.descripcion ?? '', ...filtrosCol.filtros },
+      { nombre: qNombre, area: fArea?.descripcion ?? '', ...filtrosCol.filtros },
       TAM_PAGINA,
     )
 
@@ -111,23 +110,16 @@ export default function EmpleadosPage() {
     api.get('/areas/listarActivas').then(r => setAreas(r.data)).catch(() => setAreas([]))
   }, [])
 
-  const refresh = () => { setSearch(''); return recargar() }
+  const refresh = () => recargar()
 
   // Sugerencias pedidas al servidor conforme se escribe (ver hooks/useSugerencias).
-  const sugerenciasGenerales = useSugerencias(
-    '/empleados', 'q',
-    ['noControlEmpleado', 'nombreEmpleado', 'apellidoPaternoEmpleado', 'areaAdscripcion'],
-    search,
-  )
-
   const sugerenciasNombre = useSugerencias(
     '/empleados', 'nombre', ['nombreEmpleado'], fNombre,
   )
 
-  const hayFiltros = Boolean(search || fNombre || fArea) || filtrosCol.hayFiltros
+  const hayFiltros = Boolean(fNombre || fArea) || filtrosCol.hayFiltros
 
   const limpiarFiltros = () => {
-    setSearch('')
     setFNombre('')
     setFArea(null)
     filtrosCol.limpiar()
@@ -160,16 +152,6 @@ export default function EmpleadosPage() {
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FiltroAutocomplete
             conIcono
-            label="Búsqueda general"
-            placeholder="No. de Control, apellidos, nombre o área..."
-            value={search}
-            onChange={setSearch}
-            opciones={sugerenciasGenerales.opciones}
-            cargando={sugerenciasGenerales.cargando}
-            sx={{ width: 360 }}
-          />
-
-          <FiltroAutocomplete
             label="Nombre"
             placeholder="Nombre del empleado..."
             value={fNombre}
@@ -179,16 +161,13 @@ export default function EmpleadosPage() {
             sx={{ width: 280 }}
           />
 
-          <Autocomplete
-            autoHighlight
+          <CatalogoAutocomplete
+            label="Área"
             options={areas}
-            getOptionLabel={labelArea}
-            filterOptions={filterArea}
-            isOptionEqualToValue={(a, b) => a.id === b.id}
+            getLabel={labelArea}
+            filterFn={filterArea}
             value={fArea}
-            onChange={(_, v) => setFArea(v)}
-            renderInput={(params) => <TextField {...params} label="Área" />}
-            noOptionsText="Sin resultados"
+            onChange={setFArea}
             sx={{ width: 300 }}
           />
 

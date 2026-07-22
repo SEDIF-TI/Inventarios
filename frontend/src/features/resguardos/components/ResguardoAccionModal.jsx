@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { nombreEmpleado } from '@/lib/empleados'
-import { Stack, TextField, Autocomplete, Button } from '@mui/material'
+import { Stack, TextField, Button } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
+import CatalogoAutocomplete from '@/components/ui/CatalogoAutocomplete'
 import { notify } from '@/lib/notify'
 import { labelArea, filterArea, filterEmpleado } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
@@ -80,30 +81,24 @@ export default function ResguardoAccionModal({ open, onClose, tipo, resguardo, a
     <AppModal open={open} onClose={onClose} title={TITULOS[tipo] ?? ''} actions={actions}>
       <Stack spacing={2.5} sx={{ pt: 0.5 }}>
         {necesitaEmpleado && (
-          <Autocomplete
-            autoHighlight
+          <CatalogoAutocomplete
+            label={tipo === 'reasignar' ? 'Nuevo empleado' : 'Empleado'}
             options={empleados}
-            getOptionLabel={nombreEmpleado}
-            filterOptions={filterEmpleado}
+            getLabel={nombreEmpleado}
+            filterFn={filterEmpleado}
             value={empleadoSeleccionado}
-            onChange={(_, v) => setIdEmpleado(v?.id ?? '')}
-            renderInput={(params) => (
-              <TextField {...params} label={tipo === 'reasignar' ? 'Nuevo empleado' : 'Empleado'} />
-            )}
-            noOptionsText="Sin resultados"
+            onChange={(v) => setIdEmpleado(v?.id ?? '')}
           />
         )}
 
         {necesitaArea && (
-          <Autocomplete
-            autoHighlight
+          <CatalogoAutocomplete
+            label="Área de adscripción"
             options={areas}
-            getOptionLabel={labelArea}
-            filterOptions={filterArea}
+            getLabel={labelArea}
+            filterFn={filterArea}
             value={areaSeleccionada}
-            onChange={(_, v) => setIdAreaAdscripcion(v?.id ?? '')}
-            renderInput={(params) => <TextField {...params} label="Área de adscripción" />}
-            noOptionsText="Sin resultados"
+            onChange={(v) => setIdAreaAdscripcion(v?.id ?? '')}
           />
         )}
 

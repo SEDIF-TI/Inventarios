@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Stack, TextField, Autocomplete, Button, Alert, Typography } from '@mui/material'
+import { Stack, TextField, Button, Alert, Typography } from '@mui/material'
 import AppModal from '@/components/ui/AppModal'
+import CatalogoAutocomplete from '@/components/ui/CatalogoAutocomplete'
 import { notify } from '@/lib/notify'
 import { filterEmpleado } from '@/lib/filtrosCatalogo'
 import api from '@/services/api'
@@ -78,16 +79,13 @@ export default function ReasignarLoteModal({ open, onClose, seleccionados, emple
           <strong>{empleadoActual}</strong>.
         </Alert>
 
-        <Autocomplete
-          autoHighlight
+        <CatalogoAutocomplete
+          label="Nuevo empleado"
           options={opciones}
-          getOptionLabel={nombreEmpleado}
-          filterOptions={filterEmpleado}
-          isOptionEqualToValue={(a, b) => a.id === b.id}
+          getLabel={nombreEmpleado}
+          filterFn={filterEmpleado}
           value={empleadoSeleccionado}
-          onChange={(_, v) => setIdEmpleado(v?.id ?? '')}
-          renderInput={(params) => <TextField {...params} label="Nuevo empleado" />}
-          noOptionsText="Sin resultados"
+          onChange={(v) => setIdEmpleado(v?.id ?? '')}
         />
 
         <TextField
