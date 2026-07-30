@@ -22,6 +22,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioMapper usuarioMapper;
 
     @Transactional(readOnly = true)
     public PagedResponse<UsuarioRecord> buscarUsuarios(
@@ -35,7 +36,7 @@ public class UsuarioService {
         );
 
         return PagedResponse.from(
-            usuarioRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+            usuarioRepository.findAll(spec, Paginacion.conOrden(pageable)).map(usuarioMapper::toRecord)
         );
     }
 
@@ -53,7 +54,7 @@ public class UsuarioService {
         Usuario usuario = new Usuario();
         mapearCampos(usuario, request);
         usuario.setPassword(passwordEncoder.encode(request.password()));
-        return toRecord(usuarioRepository.save(usuario));
+        return usuarioMapper.toRecord(usuarioRepository.save(usuario));
     }
 
     @Transactional
@@ -81,7 +82,7 @@ public class UsuarioService {
             usuario.setActivo(request.activo());
         }
 
-        return toRecord(usuarioRepository.save(usuario));
+        return usuarioMapper.toRecord(usuarioRepository.save(usuario));
     }
 
     //METODOS PRIVADOS-----
@@ -103,12 +104,4 @@ public class UsuarioService {
         usuario.setActivo(request.activo());
     }
 
-    private UsuarioRecord toRecord(Usuario u) {
-        return new UsuarioRecord(
-            u.getId(),
-            u.getNombreUsuario(),
-            u.getRol(),
-            u.getActivo()
-        );
-    }
 }

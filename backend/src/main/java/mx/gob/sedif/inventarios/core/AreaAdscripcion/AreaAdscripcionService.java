@@ -20,12 +20,13 @@ import mx.gob.sedif.inventarios.util.Paginacion;
 public class AreaAdscripcionService {
 
     private final AreaAdscripcionRepository areaAdscripcionRepository;
+    private final AreaAdscripcionMapper areaAdscripcionMapper;
 
     @Transactional(readOnly = true)
     @Cacheable("areasActivas")
     public List<AreaAdscripcionRecord> listarAreasActivas() {
         return areaAdscripcionRepository.findAllActivas().stream()
-            .map(this::toRecord)
+            .map(areaAdscripcionMapper::toRecord)
         .toList();
     }
 
@@ -41,7 +42,7 @@ public class AreaAdscripcionService {
         );
 
         return PagedResponse.from(
-            areaAdscripcionRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+            areaAdscripcionRepository.findAll(spec, Paginacion.conOrden(pageable)).map(areaAdscripcionMapper::toRecord)
         );
     }
 
@@ -50,7 +51,7 @@ public class AreaAdscripcionService {
     public AreaAdscripcionRecord crearArea(AreaAdscripcionRequest request) {
         AreaAdscripcion area = new AreaAdscripcion();
         mapearCampos(area, request);
-        return toRecord(areaAdscripcionRepository.save(area));
+        return areaAdscripcionMapper.toRecord(areaAdscripcionRepository.save(area));
     }
 
     @Transactional
@@ -59,7 +60,7 @@ public class AreaAdscripcionService {
         AreaAdscripcion area = areaAdscripcionRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.AREA_NO_ENCONTRADA.formatted(id)));
         mapearCampos(area, request);
-        return toRecord(areaAdscripcionRepository.save(area));
+        return areaAdscripcionMapper.toRecord(areaAdscripcionRepository.save(area));
     }
 
     //METODOS PRIVADOS-------------
@@ -71,11 +72,4 @@ public class AreaAdscripcionService {
         area.setAreaActiva(request.areaActiva() != null ? request.areaActiva() : true);
     }
 
-    private AreaAdscripcionRecord toRecord(AreaAdscripcion a) {
-        return new AreaAdscripcionRecord(a.getId(),
-        a.getCodigoAreaAdscripcion(),
-        a.getDescripcionAreaAdscripcion(),
-        a.getResponsable(),
-        a.getAreaActiva());
-    }
 }

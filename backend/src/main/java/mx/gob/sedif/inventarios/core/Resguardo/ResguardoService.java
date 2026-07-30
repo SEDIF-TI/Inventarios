@@ -35,6 +35,7 @@ public class ResguardoService {
     private final EmpleadoRepository empleadoRepository;
     private final HistorialResguardoService historialService;
     private final ResguardoMapper resguardoMapper;
+    private final ResguardoTransactionalHelper resguardoTransactionalHelper;
 
     private static final Integer ID_UNIDAD = 151;
     private static final Integer ID_DIRECCION = 152;
@@ -203,7 +204,6 @@ public class ResguardoService {
         return resguardoMapper.toRecord(guardado);
     }
 
-    @Transactional
     public ReasignarLoteResponse reasignarLote(List<Integer> ids, Integer idNuevoEmpleado, String motivo) {
         Empleado nuevoEmpleado = empleadoRepository.findById(idNuevoEmpleado)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(idNuevoEmpleado)));
@@ -213,23 +213,11 @@ public class ResguardoService {
         List<ReasignarLoteError> errores = new ArrayList<>();
 
         for (Integer id : idsUnicos) {
-            try {
-                Resguardo resguardo = resguardoRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.RESGUARDO_NO_ENCONTRADO.formatted(id)));
-
-                if (resguardo.getEstatusResguardo() != EstatusResguardo.ACTIVO) {
-                    throw new InvalidOperationException(MessageConstants.REASIGNAR_SOLO_ACTIVO);
-                }
-
-                resguardo.setEmpleado(nuevoEmpleado);
-                resguardo.setAreaAdscripcion(nuevoEmpleado.getAreaAdscripcion());
-                resguardo.setFechaAsignacionBien(LocalDate.now());
-                resguardoRepository.save(resguardo);
-
-                historialService.registrarHistorial(resguardo, Movimiento.REASIGNACION, motivo);
+            ReasignarLoteError error = resguardoTransactionalHelper.reasignarUnBien(id, nuevoEmpleado, motivo);
+            if (error != null) {
+                errores.add(error);
+            } else {
                 exitosos.add(id);
-            } catch (ResourceNotFoundException | InvalidOperationException e) {
-                errores.add(new ReasignarLoteError(id, e.getMessage()));
             }
         }
 

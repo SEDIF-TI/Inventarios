@@ -78,11 +78,11 @@ public class AuthService {
 
         Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
+        refreshTokenBlacklist.revoke(refreshToken);
+
         String newAccessToken = jwtTokenProvider.createToken(auth);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(username);
         addRefreshCookie(response, newRefreshToken);
-
-        refreshTokenBlacklist.revoke(refreshToken);
 
         Usuario usuario = usuarioRepository.findByNombreUsuario(username)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.USUARIO_NO_ENCONTRADO));

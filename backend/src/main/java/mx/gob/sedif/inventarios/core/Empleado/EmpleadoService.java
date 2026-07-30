@@ -23,6 +23,7 @@ public class EmpleadoService {
 
     private final EmpleadoRepository empleadoRepository;
     private final AreaAdscripcionRepository areaAdscripcionRepository;
+    private final EmpleadoMapper empleadoMapper;
 
     @Transactional(readOnly = true)
     public PagedResponse<EmpleadoRecord> buscarEmpleados(
@@ -40,7 +41,7 @@ public class EmpleadoService {
         );
 
         return PagedResponse.from(
-            empleadoRepository.findAll(spec, Paginacion.conOrden(pageable)).map(this::toRecord)
+            empleadoRepository.findAll(spec, Paginacion.conOrden(pageable)).map(empleadoMapper::toRecord)
         );
     }
 
@@ -49,7 +50,7 @@ public class EmpleadoService {
     public EmpleadoRecord crearEmpleado(EmpleadoRequest request) {
         Empleado empleado = new Empleado();
         mapearCampos(empleado, request);
-        return toRecord(empleadoRepository.save(empleado));
+        return empleadoMapper.toRecord(empleadoRepository.save(empleado));
     }
 
     @Transactional
@@ -59,14 +60,14 @@ public class EmpleadoService {
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.EMPLEADO_NO_ENCONTRADO.formatted(id)));
 
         mapearCampos(empleado,request);
-        return toRecord(empleadoRepository.save(empleado));
+        return empleadoMapper.toRecord(empleadoRepository.save(empleado));
     }
 
     @Transactional(readOnly = true)
     @Cacheable("empleadosActivos")
     public List<EmpleadoRecord> listarEmpleadosActivos() {
         return empleadoRepository.findAllActivos().stream()
-            .map(this::toRecord)
+            .map(empleadoMapper::toRecord)
             .toList();
     }
 
@@ -86,17 +87,5 @@ public class EmpleadoService {
         } else {
             empleado.setAreaAdscripcion(null);
         }
-    }
-
-    private EmpleadoRecord toRecord(Empleado e) {
-        return new EmpleadoRecord(
-            e.getId(),
-            e.getNoControlEmpleado(),
-            e.getNombreEmpleado(),
-            e.getApellidoPaternoEmpleado(),
-            e.getApellidoMaternoEmpleado(),
-            e.getAreaAdscripcion() != null ? e.getAreaAdscripcion().getDescripcionAreaAdscripcion() : null,
-            e.getEmpleadoActivo()
-        );
     }
 }

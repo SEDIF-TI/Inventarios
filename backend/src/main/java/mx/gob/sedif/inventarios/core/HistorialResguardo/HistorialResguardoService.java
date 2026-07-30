@@ -24,6 +24,7 @@ public class HistorialResguardoService {
 
     private final HistorialResguardoRepository historialRepository;
     private final UsuarioRepository usuarioRepository;
+    private final HistorialResguardoMapper historialResguardoMapper;
 
     /** Orden por defecto: lo más reciente primero, que es como se lee un historial. */
     private static final Sort MAS_RECIENTE_PRIMERO = Sort.by(Sort.Order.desc("fechaMovimiento"));
@@ -43,7 +44,7 @@ public class HistorialResguardoService {
 
         return PagedResponse.from(
             historialRepository.findAll(spec, Paginacion.conOrden(pageable, MAS_RECIENTE_PRIMERO))
-                .map(this::toRecord)
+                .map(historialResguardoMapper::toRecord)
         );
     }
 
@@ -66,24 +67,4 @@ public class HistorialResguardoService {
         historialRepository.save(historial);
     }
 
-    // MÉTODOS PRIVADOS-----
-
-    private HistorialResguardoRecord toRecord(HistorialResguardo h) {
-        return new HistorialResguardoRecord(
-            h.getId(),
-            h.getResguardo() != null ? h.getResguardo().getId() : null,
-            h.getResguardo() != null ? h.getResguardo().getDescripcionBien() : null,
-            h.getAreaAdscripcion() != null ? h.getAreaAdscripcion().getId() : null,
-            h.getAreaAdscripcion() != null ? h.getAreaAdscripcion().getDescripcionAreaAdscripcion() : null,
-            h.getEmpleado() != null ? h.getEmpleado().getId() : null,
-            h.getEmpleado() != null ? h.getEmpleado().getNombreEmpleado() + " " +
-                h.getEmpleado().getApellidoPaternoEmpleado() + " " +
-                h.getEmpleado().getApellidoMaternoEmpleado() : null,
-            h.getFechaMovimiento(),
-            h.getObservacion(),
-            h.getTipoMovimiento(),
-            h.getUsuario() != null ? h.getUsuario().getId() : null,
-            h.getUsuario() != null ? h.getUsuario().getNombreUsuario() : null
-        );
-    }
 }

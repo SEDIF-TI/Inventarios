@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS bucket4j_buckets (
+    id VARCHAR(100) PRIMARY KEY,
+    state BYTEA NOT NULL
+);
