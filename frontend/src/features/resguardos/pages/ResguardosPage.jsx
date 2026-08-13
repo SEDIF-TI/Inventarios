@@ -14,6 +14,7 @@ import CloseIcon       from '@mui/icons-material/Close'
 import SwapHorizIcon   from '@mui/icons-material/SwapHoriz'
 import DeselectIcon    from '@mui/icons-material/Deselect'
 import SelectAllIcon   from '@mui/icons-material/SelectAll'
+import GridOnIcon      from '@mui/icons-material/GridOn'
 import AppTable      from '@/components/ui/AppTable'
 import AppDatePicker from '@/components/ui/AppDatePicker'
 import FiltroAutocomplete from '@/components/ui/FiltroAutocomplete'
@@ -27,6 +28,7 @@ import ResguardoFormModal    from '../components/ResguardoFormModal'
 import ResguardoAccionModal  from '../components/ResguardoAccionModal'
 import ImprimirModal         from '../components/ImprimirModal'
 import ReasignarLoteModal    from '../components/ReasignarLoteModal'
+import { exportarResguardosExcel } from '../exportarExcel'
 import { labelArea, filterArea, filterEmpleado } from '@/lib/filtrosCatalogo'
 import api             from '@/services/api'
 import { notify } from '@/lib/notify'
@@ -226,6 +228,7 @@ export default function ResguardosPage() {
   const [modalImprimir,  setModalImprimir]  = useState(false)
 
   const [modalReasignar, setModalReasignar] = useState(false)
+  const [exportando, setExportando] = useState(false)
 
   // null | 'etiquetas' | 'formatos' | 'reasignar'
   const [modo, setModo] = useState(null)
@@ -425,12 +428,25 @@ export default function ResguardosPage() {
       fr.readAsDataURL(b)
     }))
 
-  const abrirPDF = (blob) => {
+  // Abre el PDF en pestaña nueva para previsualizarlo (Formatos/Etiquetas).
+  const abrirArchivo = (blob) => {
     const url = URL.createObjectURL(blob)
     const a   = document.createElement('a')
     a.href   = url
     a.target = '_blank'
     a.rel    = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 30000)
+  }
+
+  // Fuerza la descarga directa del archivo (Excel): sin pestaña nueva, sin previsualización.
+  const descargarArchivo = (blob, fileName) => {
+    const url = URL.createObjectURL(blob)
+    const a   = document.createElement('a')
+    a.href     = url
+    a.download = fileName
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -460,7 +476,7 @@ export default function ResguardosPage() {
         const blob = await pdf(
           createElement(FormatosPDF, { formatos, logoPuebla, logoFamilias })
         ).toBlob()
-        abrirPDF(blob)
+        abrirArchivo(blob)
         return formatos.length
       }).catch(err => {
         console.error('[Formatos] Error generando PDF:', err)
@@ -502,7 +518,7 @@ export default function ResguardosPage() {
         const blob = await pdf(
           createElement(EtiquetasPDF, { etiquetas, logoPuebla, logoFamilias })
         ).toBlob()
-        abrirPDF(blob)
+        abrirArchivo(blob)
         return etiquetas.length
       }).catch(err => {
         console.error('[Etiquetas] Error generando PDF:', err)
@@ -516,6 +532,25 @@ export default function ResguardosPage() {
       })
       return
     }
+  }
+
+  // Exporta TODO el área seleccionada, no solo lo que se ve filtrado o paginado: recorre
+  // el backend página por página (ver features/resguardos/exportarExcel.js).
+  const handleExportarExcel = () => {
+    if (!fArea || exportando) return
+    setExportando(true)
+    const promise = exportarResguardosExcel(fArea)
+      .then(({ blob, fileName, total }) => {
+        descargarArchivo(blob, fileName)
+        return total
+      })
+      .finally(() => setExportando(false))
+
+    notify.promise(promise, {
+      loading: { title: 'Generando Excel...' },
+      success: (n) => ({ title: 'Excel generado', description: `${n} resguardo(s) exportados` }),
+      error:   { title: 'Error', description: 'No se pudo generar el Excel' },
+    })
   }
 
   const columns = modoImpresion === 'etiquetas'
@@ -663,6 +698,17 @@ export default function ResguardosPage() {
                 )}
 
                 <SwitchMostrarTodos valor={mostrarTodos} onChange={setMostrarTodos} />
+
+                {fArea && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<GridOnIcon />}
+                    onClick={handleExportarExcel}
+                    disabled={exportando}
+                  >
+                    {exportando ? 'Exportando...' : 'Exportar a Excel'}
+                  </Button>
+                )}
 
                 {/* Solo el modo reasignar tiene checks en esta barra. */}
                 {modoReasignar && seleccionados.size > 0 && (

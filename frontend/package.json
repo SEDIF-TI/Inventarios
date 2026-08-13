@@ -23,7 +23,8 @@
     "react-dom": "^18.3.1",
     "react-loading-skeleton": "^3.5.0",
     "react-router-dom": "^6.26.2",
-    "sileo": "^0.1.5"
+    "sileo": "^0.1.5",
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.2",
